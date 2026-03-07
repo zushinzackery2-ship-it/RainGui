@@ -1,0 +1,14 @@
+# 只推 RainGui/，其他全部排除
+*
+!.gitignore
+!README.md
+!RainGui/
+!RainGui/**
+
+# RainGui 内部排除
+RainGui/bin/
+RainGui/obj/
+RainGui/test/
+*.pch
+*.vmp
+*.vmp.dll
