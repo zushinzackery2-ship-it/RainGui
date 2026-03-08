@@ -199,19 +199,84 @@ cl /nologo /O2 /MT /EHsc /W3 /LD /I%RAINGUI_DIR% ^
 
 ## 共享内存通信协议
 
-详见 [NVIDIA_COMM_GUIDE.md](NVIDIA_COMM_GUIDE.md)
+### 架构说明
 
-**支持的绘制命令：**
+```
+外部进程 (OutOverlay.exe)
+├─ 创建共享内存
+├─ 初始化配置变量
+├─ 每帧写入绘制命令
+└─ 读取 NVIDIA 端用户修改的配置
+
+注入进程 (nv_render.dll)
+├─ 打开共享内存
+├─ 显示固定 UI（读写配置变量）
+└─ 绘制共享内存中的命令
+```
+
+### 共享内存结构
+
+```cpp
+struct RainGuiCommData
+{
+    DWORD magic;              // 0x52474349
+    DWORD version;            // 1
+    DWORD frameId;            // 帧 ID
+
+    // 配置变量（双向读写）
+    RainGuiConfig config;
+    {
+        BYTE espEnabled;
+        BYTE drawPlayerSkeleton;
+        BYTE drawZombieSkeleton;
+        BYTE drawNames;
+        BYTE drawCollision;
+        BYTE aimbotEnabled;
+        BYTE drawFOV;
+        float fovRadius;
+        float smoothing;
+        float deadZone;
+        DWORD tickDelay;
+        DWORD targetBone;
+        DWORD aimKey;
+        BYTE showUI;
+    }
+
+    // 绘制命令（单向写入）
+    DWORD commandCount;
+    RainGuiDrawCommand commands[4096];
+};
+```
+
+### 支持的绘制命令
+
 - `RGUI_CMD_POINT` - 圆点
 - `RGUI_CMD_LINE` - 线段
 - `RGUI_CMD_CIRCLE` - 圆圈（空心/填充）
 - `RGUI_CMD_RECT` - 矩形（空心/填充）
 - `RGUI_CMD_TEXT` - 文字
 
-**配置同步：**
+### 配置同步
+
 - ESP 配置（骨骼、名称、碰撞体）
 - Aimbot 配置（FOV、平滑度、目标骨骼）
 - UI 状态
+
+### 工作流程
+
+```
+外部进程                          注入进程
+    ↓                                ↓
+BeginFrame()                    读取 commandCount
+    ↓                                ↓
+AddPoint/AddLine/...            遍历 commands[]
+    ↓                                ↓
+EndFrame()                      绘制到屏幕
+    ↓                                ↓
+读取 config                     用户修改 UI
+    ↓                                ↓
+应用配置到逻辑  ←──────────  写入 config
+```
 
 ---
 

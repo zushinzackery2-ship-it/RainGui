@@ -2,7 +2,6 @@
 *
 !.gitignore
 !README.md
-!NVIDIA_COMM_GUIDE.md
 !RainGui/
 !RainGui/**
 
