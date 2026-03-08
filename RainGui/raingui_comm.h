@@ -102,6 +102,7 @@ struct RainGuiCommData
     DWORD magic;               // 0x52474349 ('RGCI')
     DWORD version;             // 协议版本 (1)
     DWORD frameId;             // 帧 ID（用于检测更新）
+    char processName[64];      // 通信进程名
 
     // 配置变量（双向读写）
     RainGuiConfig config;
