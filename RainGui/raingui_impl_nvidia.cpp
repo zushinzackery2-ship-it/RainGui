@@ -4,7 +4,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <cstdio>
-#include <tlhelp32.h>
 #include <d3d11.h>
 #include <dxgi.h>
 #include <dwmapi.h>
@@ -18,6 +17,7 @@
 #include "raingui_impl_win32.h"
 #include "raingui_impl_dx11.h"
 #include "raingui_impl_nvidia.h"
+#include "raingui_comm.h"
 
 #ifndef WDA_EXCLUDEFROMCAPTURE
 #define WDA_EXCLUDEFROMCAPTURE 0x00000011
@@ -40,44 +40,14 @@ static LONG_PTR                 s_origExStyle = 0;
 // 内部函数
 // ============================================================
 
-// 枚举回调：按类名匹配 NVIDIA 覆盖层窗口（窗口初始隐藏，不能用 IsWindowVisible）
-static BOOL CALLBACK EnumThreadWndProc(HWND hWnd, LPARAM lParam)
-{
-    char cls[64] = {};
-    GetClassNameA(hWnd, cls, sizeof(cls));
-    if (strcmp(cls, "CEF-OSC-WIDGET") == 0)
-    {
-        *(HWND*)lParam = hWnd;
-        return FALSE;
-    }
-    return TRUE;
-}
-
-// 已注入进程内部，直接枚举当前进程所有线程的窗口
+// 全局查找 NVIDIA 覆盖层窗口（FindWindowA 不依赖线程快照，手动映射注入下也能用）
 static HWND FindNvidiaWindow()
 {
-    HWND result = nullptr;
-    DWORD pid = GetCurrentProcessId();
-    HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
-    if (snap == INVALID_HANDLE_VALUE)
-        return nullptr;
-
-    THREADENTRY32 te = {};
-    te.dwSize = sizeof(te);
-    if (Thread32First(snap, &te))
-    {
-        do
-        {
-            if (te.th32OwnerProcessID == pid)
-            {
-                EnumThreadWindows(te.th32ThreadID, EnumThreadWndProc, (LPARAM)&result);
-                if (result)
-                    break;
-            }
-        } while (Thread32Next(snap, &te));
-    }
-    CloseHandle(snap);
-    return result;
+    HWND hWnd = FindWindowA("CEF-OSC-WIDGET", "NVIDIA GeForce Overlay");
+    if (hWnd)
+        return hWnd;
+    // 备选：无标题的 CEF-OSC-WIDGET
+    return FindWindowA("CEF-OSC-WIDGET", nullptr);
 }
 
 static bool SetupWindow(HWND hWnd)
@@ -199,11 +169,23 @@ bool RainGui_Nvidia_Init()
     RainGui_ImplDX11_Init(s_device, s_context);
     fprintf(stderr, "[NvBackend] Init 完成!\n"); fflush(stderr);
 
+    // 初始化共享内存通信（非致命错误）
+    fprintf(stderr, "[NvBackend] RainGui_Comm_Init...\n"); fflush(stderr);
+    if (!RainGui_Comm_Init())
+    {
+        fprintf(stderr, "[NvBackend] 共享内存通信初始化失败（非致命）\n"); fflush(stderr);
+    }
+    else
+    {
+        fprintf(stderr, "[NvBackend] 共享内存通信初始化成功\n"); fflush(stderr);
+    }
+
     return true;
 }
 
 void RainGui_Nvidia_Shutdown()
 {
+    RainGui_Comm_Shutdown();
     RainGui_ImplDX11_Shutdown();
     RainGui_ImplWin32_Shutdown();
     CleanupD3D11();
@@ -260,7 +242,10 @@ void RainGui_Nvidia_Present()
     float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
     s_context->OMSetRenderTargets(1, &s_rtv, nullptr);
     s_context->ClearRenderTargetView(s_rtv, clearColor);
+
+    // 先渲染 RainGui 自身的 UI
     RainGui_ImplDX11_RenderDrawData(RainGui::GetDrawData());
+
     s_swapChain->Present(1, 0);
 }
 
