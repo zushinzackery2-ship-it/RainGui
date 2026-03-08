@@ -142,9 +142,10 @@ bool RainGui_Nvidia_Init()
     if (!s_hwnd)
         return false;
 
+    // 获取物理屏幕分辨率（DPI 感知后的真实像素）
     s_screenW = (float)GetSystemMetrics(SM_CXSCREEN);
     s_screenH = (float)GetSystemMetrics(SM_CYSCREEN);
-    fprintf(stderr, "[NvBackend] 屏幕: %.0fx%.0f\n", s_screenW, s_screenH); fflush(stderr);
+    fprintf(stderr, "[NvBackend] 物理屏幕: %.0fx%.0f\n", s_screenW, s_screenH); fflush(stderr);
 
     fprintf(stderr, "[NvBackend] SetupWindow...\n"); fflush(stderr);
     if (!SetupWindow(s_hwnd))
@@ -167,6 +168,14 @@ bool RainGui_Nvidia_Init()
     RainGui_ImplWin32_Init(s_hwnd);
     fprintf(stderr, "[NvBackend] RainGui_ImplDX11_Init...\n"); fflush(stderr);
     RainGui_ImplDX11_Init(s_device, s_context);
+
+    // 设置 DisplayFramebufferScale 为 (1, 1)，因为我们使用物理像素坐标
+    RainGuiIO& io = RainGui::GetIO();
+    io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
+    fprintf(stderr, "[NvBackend] DisplayFramebufferScale: %.2f, %.2f\n",
+        io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
+    fflush(stderr);
+
     fprintf(stderr, "[NvBackend] Init 完成!\n"); fflush(stderr);
 
     // 初始化共享内存通信（非致命错误）
