@@ -3,7 +3,7 @@
 ImGui 魔改版，API 基本对齐，内置 NVIDIA Overlay 钩子后端 + 跨进程共享内存通信。
 
 - 全量重命名 `RainGui::`、`RainGui*`、`RAINGUI_*`
-- 内置 `raingui_impl_nvidia`：自动 NVIDIA 窗口劫持 + D3D11 + 输入 + 反截图
+- 内置 `raingui_impl_nvidia`：自动 NVIDIA 窗口劫持 + D3D11 + 输入消息转发 + 反截图
 - 内置 `raingui_comm`：跨进程共享内存通信，支持外部进程发送绘制命令
 - `RainGui_Nvidia_Init()` 一行初始化
 
@@ -16,6 +16,7 @@ ImGui 魔改版，API 基本对齐，内置 NVIDIA Overlay 钩子后端 + 跨进
 - **无新窗口/进程** — 劫持 NVIDIA 已有的 `CEF-OSC-WIDGET` 窗口
 - **RainGui 渲染** — 群青色主题 + 微软雅黑字体 + DPI 感知
 - **智能点击穿透** — 鼠标在 GUI 上可交互，移开自动穿透
+- **消息转发** — 转发 Win32 WndProc，滚轮、`InputText`、快捷键输入更稳定
 - **任务栏兼容** — 窗口高度 -1px，不遮挡任务栏
 - **Alt+Z 兼容** — 每帧强制维持窗口尺寸，NVIDIA 重置后自动恢复
 
@@ -39,6 +40,7 @@ RainGui-main/
 │   ├── raingui_widgets.cpp       # 控件
 │   ├── raingui_internal.h        # 内部头文件
 │   ├── raingui_impl_nvidia.*     # NVIDIA Overlay 钩子后端
+│   ├── raingui_impl_nvidia_wndproc.hpp # NVIDIA 窗口消息转发辅助
 │   ├── raingui_impl_win32.*      # Win32 后端
 │   ├── raingui_impl_dx11.*       # DX11 后端
 │   ├── raingui_impl_dx9/10/12.*  # 其他图形 API 后端
@@ -220,8 +222,10 @@ cl /nologo /O2 /MT /EHsc /W3 /LD /I%RAINGUI_DIR% ^
 struct RainGuiCommData
 {
     DWORD magic;              // 0x52474349
-    DWORD version;            // 1
+    DWORD version;            // 3
     DWORD frameId;            // 帧 ID
+    ULONGLONG heartbeatTick;  // 发送端心跳
+    char processName[64];     // 通信进程名
 
     // 配置变量（双向读写）
     RainGuiConfig config;
@@ -231,6 +235,7 @@ struct RainGuiCommData
         BYTE drawZombieSkeleton;
         BYTE drawNames;
         BYTE drawCollision;
+        BYTE actorFilterEnabled;
         BYTE aimbotEnabled;
         BYTE drawFOV;
         float fovRadius;
@@ -240,11 +245,13 @@ struct RainGuiCommData
         DWORD targetBone;
         DWORD aimKey;
         BYTE showUI;
+        BYTE reserved[3];
+        char actorClassFilter[64];
     }
 
     // 绘制命令（单向写入）
     DWORD commandCount;
-    RainGuiDrawCommand commands[4096];
+    RainGuiDrawCommand commands[32768];
 };
 ```
 
@@ -259,8 +266,10 @@ struct RainGuiCommData
 ### 配置同步
 
 - ESP 配置（骨骼、名称、碰撞体）
+- Actor 过滤配置（过滤开关、类名关键字）
 - Aimbot 配置（FOV、平滑度、目标骨骼）
 - UI 状态
+- 心跳与通信进程名（用于离线检测和状态显示）
 
 ### 工作流程
 
@@ -285,7 +294,7 @@ EndFrame()                      绘制到屏幕
 1. **注入方式**：推荐使用内核手动映射注入，避免被检测
 2. **权限**：共享内存已配置安全描述符，允许跨进程访问
 3. **启动顺序**：DLL 和外部进程启动顺序任意，自动创建/打开共享内存
-4. **性能**：共享内存通信延迟 < 1μs，支持 60+ FPS 实时绘制
+4. **性能**：共享内存通信延迟 < 1μs，32768 条命令缓冲适合复杂场景
 
 ---
 

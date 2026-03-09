@@ -12,6 +12,24 @@
 static HANDLE s_commMap = nullptr;
 static RainGuiCommData* s_commData = nullptr;
 static DWORD s_lastFrameId = 0;
+static ULONGLONG s_lastHeartbeatTick = 0;
+
+namespace
+{
+    constexpr ULONGLONG kCommOfflineTimeoutMs = 1500;
+
+    void ResetOfflineState()
+    {
+        if (!s_commData)
+        {
+            return;
+        }
+
+        s_commData->commandCount = 0;
+        s_commData->heartbeatTick = 0;
+        s_commData->processName[0] = '\0';
+    }
+}
 
 // ============================================================
 // 公开 API
@@ -106,6 +124,13 @@ bool RainGui_Comm_Init()
         fflush(stderr);
         needInit = true;
     }
+    if (s_commData->version != RAINGUI_COMM_VERSION)
+    {
+        fprintf(stderr, "[RainGuiComm] 版本不匹配: %u (期望 %u), 重新初始化共享内存\n",
+            s_commData->version, RAINGUI_COMM_VERSION);
+        fflush(stderr);
+        needInit = true;
+    }
 
     if (needInit)
     {
@@ -117,13 +142,15 @@ bool RainGui_Comm_Init()
         s_commData->version = RAINGUI_COMM_VERSION;
         s_commData->frameId = 0;
         s_commData->commandCount = 0;
+        s_commData->heartbeatTick = 0;
 
         // 初始化默认配置
         s_commData->config.espEnabled = 1;
         s_commData->config.drawPlayerSkeleton = 1;
         s_commData->config.drawZombieSkeleton = 1;
-        s_commData->config.drawNames = 1;
+        s_commData->config.drawNames = 0;
         s_commData->config.drawCollision = 0;
+        s_commData->config.actorFilterEnabled = 1;
         s_commData->config.aimbotEnabled = 0;
         s_commData->config.drawFOV = 1;
         s_commData->config.fovRadius = 100.0f;
@@ -133,16 +160,11 @@ bool RainGui_Comm_Init()
         s_commData->config.targetBone = 0;
         s_commData->config.aimKey = VK_RBUTTON;
         s_commData->config.showUI = 1;
-    }
-
-    if (s_commData->version != RAINGUI_COMM_VERSION)
-    {
-        fprintf(stderr, "[RainGuiComm] 警告: 版本不匹配: %u (期望 %u)\n",
-            s_commData->version, RAINGUI_COMM_VERSION);
-        fflush(stderr);
+        strcpy_s(s_commData->config.actorClassFilter, "Zombie");
     }
 
     s_lastFrameId = s_commData->frameId;
+    s_lastHeartbeatTick = s_commData->heartbeatTick;
     fprintf(stderr, "[RainGuiComm] 初始化成功, frameId=%u, commandCount=%u\n",
         s_commData->frameId, s_commData->commandCount);
     fflush(stderr);
@@ -191,5 +213,24 @@ bool RainGui_Comm_IsValid()
     if (s_commData->magic != RAINGUI_COMM_MAGIC)
         return false;
 
+    if (s_commData->version != RAINGUI_COMM_VERSION)
+        return false;
+
+    ULONGLONG heartbeatTick = s_commData->heartbeatTick;
+    ULONGLONG now = GetTickCount64();
+    if (heartbeatTick == 0 || now - heartbeatTick > kCommOfflineTimeoutMs)
+    {
+        if (heartbeatTick != s_lastHeartbeatTick || s_commData->commandCount != 0 || s_commData->processName[0] != '\0')
+        {
+            fprintf(stderr, "[RainGuiComm] 检测到通信离线，清理残留绘制命令\n");
+            fflush(stderr);
+            ResetOfflineState();
+        }
+        s_lastHeartbeatTick = 0;
+        return false;
+    }
+
+    s_lastHeartbeatTick = heartbeatTick;
+    s_lastFrameId = s_commData->frameId;
     return true;
 }

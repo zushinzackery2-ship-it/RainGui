@@ -17,6 +17,7 @@
 #include "raingui_impl_win32.h"
 #include "raingui_impl_dx11.h"
 #include "raingui_impl_nvidia.h"
+#include "raingui_impl_nvidia_wndproc.hpp"
 #include "raingui_comm.h"
 
 #ifndef WDA_EXCLUDEFROMCAPTURE
@@ -155,10 +156,19 @@ bool RainGui_Nvidia_Init()
     }
     fprintf(stderr, "[NvBackend] SetupWindow 成功\n"); fflush(stderr);
 
+    fprintf(stderr, "[NvBackend] InstallWndProcHook...\n"); fflush(stderr);
+    if (!RainGuiNvidia_InstallWndProcHook(s_hwnd))
+    {
+        fprintf(stderr, "[NvBackend] InstallWndProcHook 失败!\n"); fflush(stderr);
+        return false;
+    }
+    fprintf(stderr, "[NvBackend] InstallWndProcHook 成功\n"); fflush(stderr);
+
     fprintf(stderr, "[NvBackend] InitD3D11...\n"); fflush(stderr);
     if (!InitD3D11(s_hwnd))
     {
         fprintf(stderr, "[NvBackend] InitD3D11 失败!\n"); fflush(stderr);
+        RainGuiNvidia_RemoveWndProcHook(s_hwnd);
         return false;
     }
     fprintf(stderr, "[NvBackend] InitD3D11 成功\n"); fflush(stderr);
@@ -195,6 +205,7 @@ bool RainGui_Nvidia_Init()
 void RainGui_Nvidia_Shutdown()
 {
     RainGui_Comm_Shutdown();
+    RainGuiNvidia_RemoveWndProcHook(s_hwnd);
     RainGui_ImplDX11_Shutdown();
     RainGui_ImplWin32_Shutdown();
     CleanupD3D11();

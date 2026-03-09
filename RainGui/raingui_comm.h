@@ -78,8 +78,9 @@ struct RainGuiConfig
     BYTE espEnabled;                // ESP 总开关
     BYTE drawPlayerSkeleton;        // 绘制玩家骨骼
     BYTE drawZombieSkeleton;        // 绘制僵尸骨骼
-    BYTE drawNames;                 // 绘制名称
+    BYTE drawNames;                 // 绘制类名文本
     BYTE drawCollision;             // 绘制碰撞体
+    BYTE actorFilterEnabled;        // 是否启用 Actor 类名过滤
 
     // Aimbot 配置
     BYTE aimbotEnabled;             // Aimbot 总开关
@@ -94,14 +95,16 @@ struct RainGuiConfig
     // UI 配置
     BYTE showUI;                    // 是否显示 UI
     BYTE reserved[3];               // 对齐
+    char actorClassFilter[64];      // Actor 类名过滤关键字
 };
 
 // 共享内存数据结构
 struct RainGuiCommData
 {
     DWORD magic;               // 0x52474349 ('RGCI')
-    DWORD version;             // 协议版本 (1)
+    DWORD version;             // 协议版本 (3)
     DWORD frameId;             // 帧 ID（用于检测更新）
+    ULONGLONG heartbeatTick;   // 发送端心跳，用于离线检测
     char processName[64];      // 通信进程名
 
     // 配置变量（双向读写）
@@ -109,14 +112,15 @@ struct RainGuiCommData
 
     // 绘制命令缓冲区
     DWORD commandCount;        // 当前命令数量
-    RainGuiDrawCommand commands[4096];  // 最多 4096 条命令
+    RainGuiDrawCommand commands[32768];  // 最多 32768 条命令
 };
 
 // 共享内存大小估算：
-// 4 + 4 + 4 + 4 + 4096 * 140 ≈ 560KB
+// 头部 + 32768 条命令，约 4.4MB，用于避免复杂碰撞场景提前截断
 
+#define RAINGUI_MAX_COMMANDS 32768
 #define RAINGUI_COMM_MAGIC   0x52474349
-#define RAINGUI_COMM_VERSION 1
+#define RAINGUI_COMM_VERSION 3
 #define RAINGUI_COMM_NAME    "Global\\RainGuiComm"
 #define RAINGUI_COMM_SIZE    (sizeof(RainGuiCommData))
 
