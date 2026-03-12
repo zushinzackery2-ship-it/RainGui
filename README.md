@@ -58,7 +58,6 @@ RainGui-main/
 - Visual Studio 2022 (MSVC x64)
 - Windows 10/11
 - NVIDIA GeForce Experience（覆盖层已开启）
-- 内核注入器（用于手动映射注入）
 
 ---
 
@@ -96,7 +95,7 @@ RainGui::DestroyContext();
 
 ### 方式 2：使用共享内存通信
 
-**注入端（nv_render.dll）：**
+**渲染端（nv_render.dll）：**
 ```cpp
 #include "raingui.h"
 #include "raingui_impl_nvidia.h"
@@ -187,12 +186,12 @@ cl /nologo /O2 /MT /EHsc /W3 /LD /I%RAINGUI_DIR% ^
 ## 使用场景
 
 ### 1. 游戏 Overlay（单进程）
-直接注入 DLL，使用 NVIDIA 后端绘制 UI。
+由宿主加载渲染 DLL，使用 NVIDIA 后端绘制 UI。
 
-### 2. ESP / Aimbot（跨进程）
+### 2. 跨进程绘制工具
 - 外部进程读取游戏内存，计算骨骼坐标
 - 通过共享内存发送绘制命令
-- 注入的 DLL 接收命令并绘制到屏幕
+- 渲染端 DLL 接收命令并绘制到屏幕
 
 ### 3. 调试工具
 实时显示游戏内部状态、性能指标等。
@@ -210,7 +209,7 @@ cl /nologo /O2 /MT /EHsc /W3 /LD /I%RAINGUI_DIR% ^
 ├─ 每帧写入绘制命令
 └─ 读取 NVIDIA 端用户修改的配置
 
-注入进程 (nv_render.dll)
+渲染端 (nv_render.dll)
 ├─ 打开共享内存
 ├─ 显示固定 UI（读写配置变量）
 └─ 绘制共享内存中的命令
@@ -274,7 +273,7 @@ struct RainGuiCommData
 ### 工作流程
 
 ```
-外部进程                          注入进程
+外部进程                          渲染端
     ↓                                ↓
 BeginFrame()                    读取 commandCount
     ↓                                ↓
@@ -291,7 +290,7 @@ EndFrame()                      绘制到屏幕
 
 ## 注意事项
 
-1. **注入方式**：推荐使用内核手动映射注入，避免被检测
+1. **宿主要求**：需要一个能加载 `nv_render.dll` 的宿主环境
 2. **权限**：共享内存已配置安全描述符，允许跨进程访问
 3. **启动顺序**：DLL 和外部进程启动顺序任意，自动创建/打开共享内存
 4. **性能**：共享内存通信延迟 < 1μs，32768 条命令缓冲适合复杂场景
