@@ -46,8 +46,8 @@ RainGui-main/
 │   ├── raingui_impl_dx9/10/12.*  # 其他图形 API 后端
 │   ├── raingui_comm.*            # 共享内存通信模块
 │   ├── raingui_ui_example.cpp    # UI 示例代码
+│   ├── README.md                 # RainGui 子目录补充说明
 │   └── pch.*                     # 预编译头
-├── NVIDIA_COMM_GUIDE.md          # 共享内存通信使用指南
 └── README.md                     # 本文件
 ```
 
