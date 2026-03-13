@@ -6,6 +6,14 @@ namespace RainGuiDx11HookInternal
     bool InitializeBackends(IDXGISwapChain* swapChain)
     {
         UpdateRuntimeSnapshot(swapChain);
+        RAINGUI_DX11HOOK_LOG(
+            "InitializeBackends start. swapChain=%p hwnd=%p device=%p context=%p size=%.0fx%.0f",
+            swapChain,
+            g_state.gameWindow,
+            g_state.device,
+            g_state.deviceContext,
+            g_state.runtime.width,
+            g_state.runtime.height);
 
         if (!g_state.context)
         {
@@ -14,6 +22,7 @@ namespace RainGuiDx11HookInternal
             {
                 if (!g_state.desc.autoCreateContext)
                 {
+                    RAINGUI_DX11HOOK_LOG("InitializeBackends failed: autoCreateContext disabled and no current context.");
                     return false;
                 }
 
@@ -21,6 +30,7 @@ namespace RainGuiDx11HookInternal
                 context = RainGui::CreateContext();
                 if (!context)
                 {
+                    RAINGUI_DX11HOOK_LOG("InitializeBackends failed: RainGui::CreateContext returned null.");
                     return false;
                 }
 
@@ -50,11 +60,16 @@ namespace RainGuiDx11HookInternal
 
         if (!RainGui_ImplWin32_Init(g_state.gameWindow))
         {
+            RAINGUI_DX11HOOK_LOG("InitializeBackends failed: RainGui_ImplWin32_Init hwnd=%p", g_state.gameWindow);
             return false;
         }
 
         if (!RainGui_ImplDX11_Init(g_state.device, g_state.deviceContext))
         {
+            RAINGUI_DX11HOOK_LOG(
+                "InitializeBackends failed: RainGui_ImplDX11_Init device=%p context=%p",
+                g_state.device,
+                g_state.deviceContext);
             RainGui_ImplWin32_Shutdown();
             return false;
         }
@@ -78,11 +93,22 @@ namespace RainGuiDx11HookInternal
         g_state.trackedSwapChain = swapChain;
         g_state.backendReady = true;
         g_state.deviceLost = false;
+        RAINGUI_DX11HOOK_LOG(
+            "InitializeBackends succeeded. trackedSwapChain=%p hwnd=%p originalWndProc=%p",
+            g_state.trackedSwapChain,
+            g_state.gameWindow,
+            reinterpret_cast<void*>(g_state.originalWndProc));
         return true;
     }
 
     void ShutdownBackends(bool finalShutdown)
     {
+        RAINGUI_DX11HOOK_LOG(
+            "ShutdownBackends called. finalShutdown=%d backendReady=%d context=%p hwnd=%p",
+            finalShutdown ? 1 : 0,
+            g_state.backendReady ? 1 : 0,
+            g_state.context,
+            g_state.gameWindow);
         g_state.rainGuiLockReady = false;
 
         if (g_state.originalWndProc && g_state.gameWindow && IsWindow(g_state.gameWindow))

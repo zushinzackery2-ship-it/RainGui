@@ -20,6 +20,8 @@ RainGui/bin/
 RainGui/obj/
 RainGui/bin_tmp/
 RainGui/obj_tmp/
+RainGuiDx11HookTest/bin/
+RainGuiDx11HookTest/obj/
 RainGuiDx12HookTest/bin/
 RainGuiDx12HookTest/obj/
 RainGuiDx11HookTest/bin/

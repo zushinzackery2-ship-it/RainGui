@@ -66,6 +66,7 @@ namespace RainGuiDx11HookInternal
         HMODULE d3d11Module = LoadLibraryW(L"d3d11.dll");
         if (!d3d11Module)
         {
+            RAINGUI_DX11HOOK_LOG("ProbeVtables failed: LoadLibraryW(d3d11.dll) error=%lu", GetLastError());
             DestroyProbeWindow(windowClass, windowHandle);
             return false;
         }
@@ -74,6 +75,7 @@ namespace RainGuiDx11HookInternal
             GetProcAddress(d3d11Module, "D3D11CreateDeviceAndSwapChain"));
         if (!d3d11CreateDeviceAndSwapChain)
         {
+            RAINGUI_DX11HOOK_LOG("ProbeVtables failed: GetProcAddress(D3D11CreateDeviceAndSwapChain)");
             DestroyProbeWindow(windowClass, windowHandle);
             return false;
         }
@@ -119,11 +121,20 @@ namespace RainGuiDx11HookInternal
                 &deviceContext);
             if (FAILED(hr))
             {
+                RAINGUI_DX11HOOK_LOG(
+                    "ProbeVtables D3D11CreateDeviceAndSwapChain failed. driverType=%u hr=0x%08X",
+                    static_cast<unsigned int>(driverType),
+                    static_cast<unsigned int>(hr));
                 continue;
             }
 
             probeData.swapChainVtable = *reinterpret_cast<void***>(swapChain);
             success = probeData.swapChainVtable != nullptr;
+            RAINGUI_DX11HOOK_LOG(
+                "ProbeVtables captured swapChain=%p vtable=%p driverType=%u",
+                swapChain,
+                probeData.swapChainVtable,
+                static_cast<unsigned int>(driverType));
             break;
         }
 
@@ -143,6 +154,10 @@ namespace RainGuiDx11HookInternal
         }
 
         DestroyProbeWindow(windowClass, windowHandle);
+        if (!success)
+        {
+            RAINGUI_DX11HOOK_LOG("ProbeVtables finished without a usable swapchain vtable.");
+        }
         return success;
     }
 }

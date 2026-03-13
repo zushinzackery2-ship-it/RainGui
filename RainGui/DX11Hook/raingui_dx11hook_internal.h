@@ -11,6 +11,13 @@
 #include "../raingui_impl_dx11hook.h"
 #include "../raingui_impl_win32.h"
 
+#if __has_include("ConsoleLogger.h")
+#include "ConsoleLogger.h"
+#define RAINGUI_DX11HOOK_LOG(...) ConsoleLogger::Log(__VA_ARGS__)
+#else
+#define RAINGUI_DX11HOOK_LOG(...) do { } while (0)
+#endif
+
 namespace RainGuiDx11HookInternal
 {
     static constexpr UINT MaxBackBuffers = 8;
@@ -88,6 +95,7 @@ namespace RainGuiDx11HookInternal
 
     void UpdateRuntimeSnapshot(IDXGISwapChain* swapChain);
     bool CreateRenderResources(IDXGISwapChain* swapChain);
+    bool EnsureRenderTargetView(IDXGISwapChain* swapChain, UINT bufferIndex);
     void CleanupRenderResources();
     bool InitializeBackends(IDXGISwapChain* swapChain);
     void ShutdownBackends(bool finalShutdown);

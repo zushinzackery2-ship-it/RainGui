@@ -36,10 +36,10 @@ RainGui 核心库目录。
   - 默认 overlay 外观
 - `raingui_dx11hook_types.h`
   - DX11Hook 对外结构
-- `raingui_impl_dx11hook.h`
-  - DX11Hook 对外 C++ 接口
 - `raingui_dx12hook_types.h`
   - DX12Hook 对外结构
+- `raingui_impl_dx11hook.h`
+  - DX11Hook 对外 C++ 接口
 - `raingui_impl_dx12hook.h`
   - DX12Hook 对外 C++ 接口
 - `raingui_exports.*`
@@ -50,10 +50,11 @@ RainGui 核心库目录。
 ### 安装层负责
 
 - VMT hook
-- `IDXGISwapChain::Present` `vtable[8]`
-- `Present` 内部处理 RTV 重建
-- Device lost / swapchain 热切换
+- 临时设备探测 vtable
+- `Present`
+- `Present` 内的资源初始化 / 重建
 - WndProc hook
+- Device lost
 - 安全卸载
 
 ### 业务层负责
@@ -62,16 +63,6 @@ RainGui 核心库目录。
 - `onRender`
 - `isVisible`
 - `onShutdown`
-
-### 默认导出
-
-- `RainGui_DX11Hook_FillDefaultDesc`
-- `RainGui_DX11Hook_Init`
-- `RainGui_DX11Hook_Shutdown`
-- `RainGui_DX11Hook_IsInstalled`
-- `RainGui_DX11Hook_IsReady`
-- `RainGui_DX11Hook_GetRuntime`
-- `RainGui_ApplyOverlayDefaults`
 
 ## DX12Hook
 
@@ -93,8 +84,14 @@ RainGui 核心库目录。
 - `isVisible`
 - `onShutdown`
 
-### 默认导出
+## Hook 默认导出
 
+- `RainGui_DX11Hook_FillDefaultDesc`
+- `RainGui_DX11Hook_Init`
+- `RainGui_DX11Hook_Shutdown`
+- `RainGui_DX11Hook_IsInstalled`
+- `RainGui_DX11Hook_IsReady`
+- `RainGui_DX11Hook_GetRuntime`
 - `RainGui_DX12Hook_FillDefaultDesc`
 - `RainGui_DX12Hook_Init`
 - `RainGui_DX12Hook_Shutdown`
@@ -103,7 +100,7 @@ RainGui 核心库目录。
 - `RainGui_DX12Hook_GetRuntime`
 - `RainGui_ApplyOverlayDefaults`
 
-## DX12Hook 最小接入示例
+## Hook 最小接入示例（DX12）
 
 ```cpp
 #include "raingui_exports.h"
@@ -148,18 +145,13 @@ void InstallHook()
 }
 ```
 
-## DX11 / DX12 接法
-
-- DX11 和 DX12 的回调模型保持一致
-- 切换时主要替换 `Desc / Runtime` 类型和 `RainGui_DX11Hook_* / RainGui_DX12Hook_*`
-- DX11 runtime 提供 `device + deviceContext`
-- DX12 runtime 提供 `device + commandQueue`
-
 ## 构建
 
 ```powershell
 .\build.bat
 ```
+
+`build.bat` 会同时编译 DX11Hook / DX12Hook 实现，并产出统一的 `RainGui.dll`。
 
 构建成功后生成：
 
@@ -171,14 +163,14 @@ bin\RainGui.exp
 
 ## 测试载荷
 
-根目录测试载荷：
+根目录里同时提供两个独立测试 DLL：
 
 - `RainGuiDx11HookTest/`
 - `RainGuiDx12HookTest/`
 
-共同特性：
+共同特征：
 
 - 注入后自动加载 `RainGui.dll`
-- 自动安装对应 Hook
+- 自动安装对应的 Hook
 - 成功后显示调试窗口
 - 只用于验证 hook 是否正常

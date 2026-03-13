@@ -191,6 +191,9 @@ void RainGui_ImplDX11_RenderDrawData(ImDrawData* draw_data)
         ID3D11PixelShader*          PS;
         ID3D11VertexShader*         VS;
         ID3D11GeometryShader*       GS;
+        ID3D11HullShader*           HS;
+        ID3D11DomainShader*         DS;
+        ID3D11ComputeShader*        CS;
         UINT                        PSInstancesCount, VSInstancesCount, GSInstancesCount;
         ID3D11ClassInstance         *PSInstances[256], *VSInstances[256], *GSInstances[256];   // 256 is max according to PSSetShader documentation
         D3D11_PRIMITIVE_TOPOLOGY    PrimitiveTopology;
@@ -213,6 +216,9 @@ void RainGui_ImplDX11_RenderDrawData(ImDrawData* draw_data)
     ctx->VSGetShader(&old.VS, old.VSInstances, &old.VSInstancesCount);
     ctx->VSGetConstantBuffers(0, 1, &old.VSConstantBuffer);
     ctx->GSGetShader(&old.GS, old.GSInstances, &old.GSInstancesCount);
+    ctx->HSGetShader(&old.HS, NULL, NULL);
+    ctx->DSGetShader(&old.DS, NULL, NULL);
+    ctx->CSGetShader(&old.CS, NULL, NULL);
 
     ctx->IAGetPrimitiveTopology(&old.PrimitiveTopology);
     ctx->IAGetIndexBuffer(&old.IndexBuffer, &old.IndexBufferFormat, &old.IndexBufferOffset);
@@ -271,6 +277,9 @@ void RainGui_ImplDX11_RenderDrawData(ImDrawData* draw_data)
     ctx->VSSetShader(old.VS, old.VSInstances, old.VSInstancesCount); if (old.VS) old.VS->Release();
     ctx->VSSetConstantBuffers(0, 1, &old.VSConstantBuffer); if (old.VSConstantBuffer) old.VSConstantBuffer->Release();
     ctx->GSSetShader(old.GS, old.GSInstances, old.GSInstancesCount); if (old.GS) old.GS->Release();
+    ctx->HSSetShader(old.HS, NULL, 0); if (old.HS) old.HS->Release();
+    ctx->DSSetShader(old.DS, NULL, 0); if (old.DS) old.DS->Release();
+    ctx->CSSetShader(old.CS, NULL, 0); if (old.CS) old.CS->Release();
     for (UINT i = 0; i < old.VSInstancesCount; i++) if (old.VSInstances[i]) old.VSInstances[i]->Release();
     ctx->IASetPrimitiveTopology(old.PrimitiveTopology);
     ctx->IASetIndexBuffer(old.IndexBuffer, old.IndexBufferFormat, old.IndexBufferOffset); if (old.IndexBuffer) old.IndexBuffer->Release();

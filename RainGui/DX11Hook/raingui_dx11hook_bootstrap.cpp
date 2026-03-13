@@ -68,6 +68,7 @@ namespace RainGuiDx11HookInternal
     {
         if (!ProbeVtables(g_state.probe))
         {
+            RAINGUI_DX11HOOK_LOG("InstallHooks failed: ProbeVtables returned false.");
             return false;
         }
 
@@ -77,14 +78,27 @@ namespace RainGuiDx11HookInternal
                 reinterpret_cast<void*>(&HookPresent),
                 reinterpret_cast<void**>(&g_state.originalPresent)))
         {
+            RAINGUI_DX11HOOK_LOG(
+                "InstallHooks failed: PatchVtable(vtable=%p, index=8) error=%lu",
+                g_state.probe.swapChainVtable,
+                GetLastError());
             return false;
         }
 
+        RAINGUI_DX11HOOK_LOG(
+            "InstallHooks succeeded. probeVtable=%p originalPresent=%p hookPresent=%p",
+            g_state.probe.swapChainVtable,
+            reinterpret_cast<void*>(g_state.originalPresent),
+            reinterpret_cast<void*>(&HookPresent));
         return true;
     }
 
     void UninstallHooks()
     {
+        RAINGUI_DX11HOOK_LOG(
+            "UninstallHooks called. probeVtable=%p originalPresent=%p",
+            g_state.probe.swapChainVtable,
+            reinterpret_cast<void*>(g_state.originalPresent));
         RestoreVtable(g_state.probe.swapChainVtable, 8, reinterpret_cast<void*>(g_state.originalPresent));
         g_state.originalPresent = nullptr;
         ZeroMemory(&g_state.probe, sizeof(g_state.probe));
@@ -146,6 +160,7 @@ namespace RainGuiDx11Hook
             return false;
         }
 
+        RAINGUI_DX11HOOK_LOG("RainGuiDx11Hook::Init completed. installed=1");
         g_state.installed = true;
         return true;
     }
@@ -172,6 +187,7 @@ namespace RainGuiDx11Hook
         UninstallHooks();
         ShutdownBackends(true);
 
+        RAINGUI_DX11HOOK_LOG("RainGuiDx11Hook::Shutdown completed.");
         g_state.installed = false;
         g_state.backendReady = false;
         g_state.deviceLost = false;

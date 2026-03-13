@@ -52,6 +52,7 @@ namespace RainGuiDx11HookInternal
 {
     void RenderFrame(IDXGISwapChain* swapChain)
     {
+        static LONG renderLogCount = 0;
         if (!g_state.backendReady || g_state.deviceLost || !g_state.context || !g_state.deviceContext)
         {
             return;
@@ -63,10 +64,28 @@ namespace RainGuiDx11HookInternal
             return;
         }
 
+        if (!EnsureRenderTargetView(swapChain, bufferIndex))
+        {
+            return;
+        }
+
         ID3D11RenderTargetView* renderTargetView = g_state.renderTargetViews[bufferIndex];
         if (!renderTargetView)
         {
             return;
+        }
+
+        LONG currentRenderLog = InterlockedIncrement(&renderLogCount);
+        if (currentRenderLog <= 5)
+        {
+            RAINGUI_DX11HOOK_LOG(
+                "RenderFrame #%ld swapChain=%p bufferIndex=%u rtv=%p size=%.0fx%.0f",
+                currentRenderLog,
+                swapChain,
+                static_cast<unsigned int>(bufferIndex),
+                renderTargetView,
+                g_state.runtime.width,
+                g_state.runtime.height);
         }
 
         if (g_state.multithread)
@@ -165,12 +184,18 @@ namespace RainGuiDx11HookInternal
             // 只挂 vtable[8] 时，资源重建必须在 Present 内自己兜住。
             if (g_state.deviceLost && g_state.backendReady)
             {
+                RAINGUI_DX11HOOK_LOG("ProcessPresentFrame detected deviceLost with backendReady=1, forcing rebuild.");
                 ShutdownBackends(false);
                 g_state.frameCount = 0;
             }
 
             if (IsSwapChainStateChanged(swapChain))
             {
+                RAINGUI_DX11HOOK_LOG(
+                    "ProcessPresentFrame detected swapchain change. tracked=%p current=%p hwnd=%p",
+                    g_state.trackedSwapChain,
+                    swapChain,
+                    g_state.gameWindow);
                 ShutdownBackends(false);
                 g_state.frameCount = 0;
             }
@@ -186,10 +211,12 @@ namespace RainGuiDx11HookInternal
             {
                 if (CreateRenderResources(swapChain) && InitializeBackends(swapChain))
                 {
+                    RAINGUI_DX11HOOK_LOG("ProcessPresentFrame initialized backends successfully.");
                     UpdateRuntimeSnapshot(swapChain);
                 }
                 else
                 {
+                    RAINGUI_DX11HOOK_LOG("ProcessPresentFrame failed to initialize backends, forcing shutdown.");
                     ShutdownBackends(false);
                 }
             }
@@ -226,6 +253,20 @@ namespace RainGuiDx11HookInternal
 
     HRESULT STDMETHODCALLTYPE HookPresent(IDXGISwapChain* swapChain, UINT syncInterval, UINT flags)
     {
+        static LONG presentLogCount = 0;
+        LONG currentPresentLog = InterlockedIncrement(&presentLogCount);
+        if (currentPresentLog <= 8)
+        {
+            RAINGUI_DX11HOOK_LOG(
+                "HookPresent #%ld swapChain=%p sync=%u flags=0x%X backendReady=%d deviceLost=%d",
+                currentPresentLog,
+                swapChain,
+                static_cast<unsigned int>(syncInterval),
+                static_cast<unsigned int>(flags),
+                g_state.backendReady ? 1 : 0,
+                g_state.deviceLost ? 1 : 0);
+        }
+
         if (g_state.unloading || g_state.suspendRendering)
         {
             DWORD exceptionCode = 0;

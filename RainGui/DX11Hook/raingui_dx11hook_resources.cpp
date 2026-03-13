@@ -49,12 +49,14 @@ namespace RainGuiDx11HookInternal
         DXGI_SWAP_CHAIN_DESC desc = {};
         if (!swapChain || FAILED(swapChain->GetDesc(&desc)))
         {
+            RAINGUI_DX11HOOK_LOG("CreateRenderResources failed: swapChain=%p GetDesc failed.", swapChain);
             return false;
         }
 
         g_state.bufferCount = desc.BufferCount;
         if (g_state.bufferCount == 0)
         {
+            RAINGUI_DX11HOOK_LOG("CreateRenderResources failed: bufferCount is zero.");
             return false;
         }
 
@@ -74,12 +76,14 @@ namespace RainGuiDx11HookInternal
 
         if (FAILED(swapChain->GetDevice(IID_PPV_ARGS(&g_state.device))))
         {
+            RAINGUI_DX11HOOK_LOG("CreateRenderResources failed: GetDevice failed.");
             return false;
         }
 
         g_state.device->GetImmediateContext(&g_state.deviceContext);
         if (!g_state.deviceContext)
         {
+            RAINGUI_DX11HOOK_LOG("CreateRenderResources failed: GetImmediateContext returned null.");
             return false;
         }
 
@@ -89,39 +93,73 @@ namespace RainGuiDx11HookInternal
             g_state.multithread->SetMultithreadProtected(TRUE);
         }
 
-        for (UINT index = 0; index < g_state.bufferCount; ++index)
-        {
-            ID3D11Texture2D* backBuffer = nullptr;
-            if (FAILED(swapChain->GetBuffer(index, IID_PPV_ARGS(&backBuffer))))
-            {
-                return false;
-            }
+        RAINGUI_DX11HOOK_LOG(
+            "CreateRenderResources succeeded. swapChain=%p device=%p context=%p hwnd=%p buffers=%u size=%ux%u format=%u",
+            swapChain,
+            g_state.device,
+            g_state.deviceContext,
+            desc.OutputWindow,
+            static_cast<unsigned int>(g_state.bufferCount),
+            static_cast<unsigned int>(g_state.trackedWidth),
+            static_cast<unsigned int>(g_state.trackedHeight),
+            static_cast<unsigned int>(g_state.backBufferFormat));
+        return true;
+    }
 
-            HRESULT hr = g_state.device->CreateRenderTargetView(backBuffer, nullptr, &g_state.renderTargetViews[index]);
-            backBuffer->Release();
-            if (FAILED(hr))
-            {
-                return false;
-            }
+    bool EnsureRenderTargetView(IDXGISwapChain* swapChain, UINT bufferIndex)
+    {
+        if (!swapChain || bufferIndex >= g_state.bufferCount)
+        {
+            return false;
         }
 
+        if (g_state.renderTargetViews[bufferIndex])
+        {
+            return true;
+        }
+
+        ID3D11Texture2D* backBuffer = nullptr;
+        if (FAILED(swapChain->GetBuffer(bufferIndex, IID_PPV_ARGS(&backBuffer))))
+        {
+            RAINGUI_DX11HOOK_LOG(
+                "EnsureRenderTargetView failed: GetBuffer(%u) failed.",
+                static_cast<unsigned int>(bufferIndex));
+            return false;
+        }
+
+        D3D11_TEXTURE2D_DESC backBufferDesc = {};
+        backBuffer->GetDesc(&backBufferDesc);
+
+        HRESULT hr = g_state.device->CreateRenderTargetView(backBuffer, nullptr, &g_state.renderTargetViews[bufferIndex]);
+        backBuffer->Release();
+        if (FAILED(hr))
+        {
+            RAINGUI_DX11HOOK_LOG(
+                "EnsureRenderTargetView failed: CreateRenderTargetView(%u) hr=0x%08X format=%u bind=0x%X misc=0x%X",
+                static_cast<unsigned int>(bufferIndex),
+                static_cast<unsigned int>(hr),
+                static_cast<unsigned int>(backBufferDesc.Format),
+                static_cast<unsigned int>(backBufferDesc.BindFlags),
+                static_cast<unsigned int>(backBufferDesc.MiscFlags));
+            return false;
+        }
+
+        RAINGUI_DX11HOOK_LOG(
+            "EnsureRenderTargetView succeeded: index=%u rtv=%p format=%u bind=0x%X",
+            static_cast<unsigned int>(bufferIndex),
+            g_state.renderTargetViews[bufferIndex],
+            static_cast<unsigned int>(backBufferDesc.Format),
+            static_cast<unsigned int>(backBufferDesc.BindFlags));
         return true;
     }
 
     void CleanupRenderResources()
     {
-        if (g_state.deviceContext)
-        {
-            __try
-            {
-                g_state.deviceContext->ClearState();
-                g_state.deviceContext->Flush();
-            }
-            __except (EXCEPTION_EXECUTE_HANDLER)
-            {
-            }
-        }
-
+        RAINGUI_DX11HOOK_LOG(
+            "CleanupRenderResources called. device=%p context=%p trackedSwapChain=%p",
+            g_state.device,
+            g_state.deviceContext,
+            g_state.trackedSwapChain);
         for (UINT index = 0; index < MaxBackBuffers; ++index)
         {
             if (g_state.renderTargetViews[index])
