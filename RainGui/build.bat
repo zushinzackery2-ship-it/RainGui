@@ -22,6 +22,13 @@ cl /nologo /c /std:c++17 /EHsc /O2 /MT /W3 /DRAINGUI_BUILD_DLL /I"." /Fo"%OBJ_DI
     raingui_tables.cpp ^
     raingui_impl_dx9.cpp ^
     raingui_impl_dx10.cpp ^
+    DX11Hook\raingui_dx11hook_probe.cpp ^
+    DX11Hook\raingui_dx11hook_bootstrap.cpp ^
+    DX11Hook\raingui_dx11hook_debug.cpp ^
+    DX11Hook\raingui_dx11hook_resources.cpp ^
+    DX11Hook\raingui_dx11hook_context.cpp ^
+    DX11Hook\raingui_dx11hook_hooks_common.cpp ^
+    DX11Hook\raingui_dx11hook_hooks_present.cpp ^
     raingui_impl_dx12.cpp ^
     DX12Hook\raingui_dx12hook_probe.cpp ^
     DX12Hook\raingui_dx12hook_bootstrap.cpp ^

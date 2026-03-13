@@ -6,6 +6,7 @@
 #include "raingui_impl_dx10.h"
 #include "raingui_impl_dx11.h"
 #include "raingui_impl_dx12.h"
+#include "raingui_dx11hook_types.h"
 #include "raingui_dx12hook_types.h"
 
 #undef RAINGUI_API
@@ -84,6 +85,13 @@ RAINGUI_API void RainGui_DX11_NewFrame();
 RAINGUI_API void RainGui_DX11_RenderDrawData(ImDrawData* drawData);
 RAINGUI_API bool RainGui_DX11_CreateDeviceObjects();
 RAINGUI_API void RainGui_DX11_InvalidateDeviceObjects();
+
+RAINGUI_API void RainGui_DX11Hook_FillDefaultDesc(RainGuiDx11HookDesc* desc);
+RAINGUI_API bool RainGui_DX11Hook_Init(const RainGuiDx11HookDesc* desc);
+RAINGUI_API void RainGui_DX11Hook_Shutdown();
+RAINGUI_API bool RainGui_DX11Hook_IsInstalled();
+RAINGUI_API bool RainGui_DX11Hook_IsReady();
+RAINGUI_API const RainGuiDx11HookRuntime* RainGui_DX11Hook_GetRuntime();
 
 RAINGUI_API bool RainGui_DX12_Init(ID3D12Device* device, int numFramesInFlight, DXGI_FORMAT rtvFormat, ID3D12DescriptorHeap* cbvSrvHeap,
     D3D12_CPU_DESCRIPTOR_HANDLE fontSrvCpuDescHandle, D3D12_GPU_DESCRIPTOR_HANDLE fontSrvGpuDescHandle);

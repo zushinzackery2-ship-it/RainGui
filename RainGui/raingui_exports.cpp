@@ -1,6 +1,7 @@
 #include <d3d12.h>
 
 #include "raingui_exports.h"
+#include "raingui_impl_dx11hook.h"
 #include "raingui_impl_dx12hook.h"
 
 RAINGUI_API RainGuiContext* RainGui_CreateContext()
@@ -291,6 +292,36 @@ RAINGUI_API bool RainGui_DX11_CreateDeviceObjects()
 RAINGUI_API void RainGui_DX11_InvalidateDeviceObjects()
 {
     RainGui_ImplDX11_InvalidateDeviceObjects();
+}
+
+RAINGUI_API void RainGui_DX11Hook_FillDefaultDesc(RainGuiDx11HookDesc* desc)
+{
+    RainGuiDx11Hook::FillDefaultDesc(desc);
+}
+
+RAINGUI_API bool RainGui_DX11Hook_Init(const RainGuiDx11HookDesc* desc)
+{
+    return RainGuiDx11Hook::Init(desc);
+}
+
+RAINGUI_API void RainGui_DX11Hook_Shutdown()
+{
+    RainGuiDx11Hook::Shutdown();
+}
+
+RAINGUI_API bool RainGui_DX11Hook_IsInstalled()
+{
+    return RainGuiDx11Hook::IsInstalled();
+}
+
+RAINGUI_API bool RainGui_DX11Hook_IsReady()
+{
+    return RainGuiDx11Hook::IsReady();
+}
+
+RAINGUI_API const RainGuiDx11HookRuntime* RainGui_DX11Hook_GetRuntime()
+{
+    return RainGuiDx11Hook::GetRuntime();
 }
 
 RAINGUI_API bool RainGui_DX12_Init(ID3D12Device* device, int numFramesInFlight, DXGI_FORMAT rtvFormat, ID3D12DescriptorHeap* cbvSrvHeap,

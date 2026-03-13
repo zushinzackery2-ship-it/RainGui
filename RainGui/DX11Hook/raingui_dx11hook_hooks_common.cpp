@@ -1,8 +1,8 @@
-#include "raingui_dx12hook_internal.h"
+#include "raingui_dx11hook_internal.h"
 
 extern LRESULT RainGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-namespace RainGuiDx12HookInternal
+namespace RainGuiDx11HookInternal
 {
     bool IsInteractiveVisible()
     {
@@ -106,24 +106,6 @@ namespace RainGuiDx12HookInternal
         return g_state.originalPresent;
     }
 
-    ExecuteCommandListsFn ResolveExecuteFn(ID3D12CommandQueue* queue)
-    {
-        if (queue)
-        {
-            auto** vtable = *reinterpret_cast<void***>(queue);
-            if (vtable)
-            {
-                auto fn = reinterpret_cast<ExecuteCommandListsFn>(vtable[10]);
-                if (fn && fn != HookExecuteCommandLists)
-                {
-                    return fn;
-                }
-            }
-        }
-
-        return g_state.originalExecuteCommandLists;
-    }
-
     HRESULT CallOriginalPresentSafe(
         IDXGISwapChain* swapChain,
         UINT syncInterval,
@@ -154,41 +136,5 @@ namespace RainGuiDx12HookInternal
 
             return E_FAIL;
         }
-    }
-
-    bool CallOriginalExecuteSafe(
-        ID3D12CommandQueue* queue,
-        UINT numCommandLists,
-        ID3D12CommandList* const* commandLists)
-    {
-        ExecuteCommandListsFn fn = ResolveExecuteFn(queue);
-        if (!fn)
-        {
-            return false;
-        }
-
-        fn(queue, numCommandLists, commandLists);
-        return true;
-    }
-
-    void TryHookResizeBuffers1(IDXGISwapChain* swapChain)
-    {
-        if (g_state.originalResizeBuffers1 || !swapChain)
-        {
-            return;
-        }
-
-        auto** vtable = *reinterpret_cast<void***>(swapChain);
-        if (!vtable)
-        {
-            return;
-        }
-
-        g_state.trackedSwapChainVtable = vtable;
-        PatchVtable(
-            vtable,
-            39,
-            reinterpret_cast<void*>(&HookResizeBuffers1),
-            reinterpret_cast<void**>(&g_state.originalResizeBuffers1));
     }
 }

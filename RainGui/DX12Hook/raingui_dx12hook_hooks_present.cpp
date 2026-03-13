@@ -128,13 +128,27 @@ namespace RainGuiDx12HookInternal
         if (g_state.suspendRendering)
         {
             InterlockedDecrement(&g_state.presentInFlight);
-            return CallOriginalPresentSafe(swapChain, syncInterval, flags, nullptr);
+            DWORD exceptionCode = 0;
+            HRESULT hr = CallOriginalPresentSafe(swapChain, syncInterval, flags, &exceptionCode);
+            if (exceptionCode)
+            {
+                g_state.deviceLost = true;
+            }
+
+            return hr;
         }
 
         if ((flags & DXGI_PRESENT_TEST) || (g_state.gameWindow && IsIconic(g_state.gameWindow)))
         {
             InterlockedDecrement(&g_state.presentInFlight);
-            return CallOriginalPresentSafe(swapChain, syncInterval, flags, nullptr);
+            DWORD exceptionCode = 0;
+            HRESULT hr = CallOriginalPresentSafe(swapChain, syncInterval, flags, &exceptionCode);
+            if (exceptionCode)
+            {
+                g_state.deviceLost = true;
+            }
+
+            return hr;
         }
 
         if (g_state.renderCsReady)

@@ -1,29 +1,81 @@
 # RainGui
 
-这个目录是库本体。
+RainGui 核心库目录。
 
-## 包含内容
+## 当前状态
 
+- 品牌标识已统一为 `RainGui`
+- 默认不再自动生成 `raingui.ini`
+- 默认日志名为 `raingui_log.txt`
+- 默认禁用 Demo 和 Metrics 窗口
+- `ImDrawVert` 已改为非官方默认布局
+- DX9 / DX10 / DX11 / DX12 backend 已同步 RainGui 品牌名
+- 新增模块化 `DX11Hook`
+- 保留 NVIDIA Overlay 后端
+- 保留共享内存通信模块
+- 新增模块化 `DX12Hook`
+- 新增统一默认外观入口 `RainGui_ApplyOverlayDefaults()`
+
+## 目录内重要文件
+
+- `DX11Hook/`
+  - DX11Hook 内部实现
+- `DX12Hook/`
+  - DX12Hook 内部实现
 - `raingui.*`
-  - RainGui 核心源码
+  - 核心源码
 - `raingui_impl_win32.*`
   - Win32 backend
 - `raingui_impl_dx9/10/11/12.*`
   - 图形 backend
 - `raingui_impl_nvidia.*`
-  - NVIDIA overlay backend
+  - NVIDIA Overlay 后端
 - `raingui_comm.*`
   - 共享内存通信
-- `DX12Hook/`
-  - DX12Hook 内部实现
-- `raingui_exports.*`
-  - DLL 导出层
 - `raingui_defaults.*`
   - 默认 overlay 外观
+- `raingui_dx11hook_types.h`
+  - DX11Hook 对外结构
+- `raingui_impl_dx11hook.h`
+  - DX11Hook 对外 C++ 接口
+- `raingui_dx12hook_types.h`
+  - DX12Hook 对外结构
+- `raingui_impl_dx12hook.h`
+  - DX12Hook 对外 C++ 接口
+- `raingui_exports.*`
+  - DLL 导出层
+
+## DX11Hook
+
+### 安装层负责
+
+- VMT hook
+- `IDXGISwapChain::Present` `vtable[8]`
+- `Present` 内部处理 RTV 重建
+- Device lost / swapchain 热切换
+- WndProc hook
+- 安全卸载
+
+### 业务层负责
+
+- `onSetup`
+- `onRender`
+- `isVisible`
+- `onShutdown`
+
+### 默认导出
+
+- `RainGui_DX11Hook_FillDefaultDesc`
+- `RainGui_DX11Hook_Init`
+- `RainGui_DX11Hook_Shutdown`
+- `RainGui_DX11Hook_IsInstalled`
+- `RainGui_DX11Hook_IsReady`
+- `RainGui_DX11Hook_GetRuntime`
+- `RainGui_ApplyOverlayDefaults`
 
 ## DX12Hook
 
-当前 DX12Hook 负责：
+### 安装层负责
 
 - VMT hook
 - 临时设备探测 vtable
@@ -34,7 +86,14 @@
 - WndProc hook
 - 安全卸载
 
-对外导出：
+### 业务层负责
+
+- `onSetup`
+- `onRender`
+- `isVisible`
+- `onShutdown`
+
+### 默认导出
 
 - `RainGui_DX12Hook_FillDefaultDesc`
 - `RainGui_DX12Hook_Init`
@@ -44,14 +103,7 @@
 - `RainGui_DX12Hook_GetRuntime`
 - `RainGui_ApplyOverlayDefaults`
 
-`RainGuiDx12HookDesc` 默认行为：
-
-- 自动创建 context
-- hook WndProc
-- 菜单可见时拦截输入
-- 默认热键 `VK_INSERT`
-
-## 最小接入
+## DX12Hook 最小接入示例
 
 ```cpp
 #include "raingui_exports.h"
@@ -96,13 +148,20 @@ void InstallHook()
 }
 ```
 
+## DX11 / DX12 接法
+
+- DX11 和 DX12 的回调模型保持一致
+- 切换时主要替换 `Desc / Runtime` 类型和 `RainGui_DX11Hook_* / RainGui_DX12Hook_*`
+- DX11 runtime 提供 `device + deviceContext`
+- DX12 runtime 提供 `device + commandQueue`
+
 ## 构建
 
 ```powershell
 .\build.bat
 ```
 
-输出：
+构建成功后生成：
 
 ```text
 bin\RainGui.dll
@@ -112,10 +171,14 @@ bin\RainGui.exp
 
 ## 测试载荷
 
-仓库根目录的 `RainGuiDx12HookTest/` 是独立测试 DLL：
+根目录测试载荷：
+
+- `RainGuiDx11HookTest/`
+- `RainGuiDx12HookTest/`
+
+共同特性：
 
 - 注入后自动加载 `RainGui.dll`
-- 自动安装 DX12Hook
+- 自动安装对应 Hook
+- 成功后显示调试窗口
 - 只用于验证 hook 是否正常
-
-正式功能不要写进这个测试载荷。

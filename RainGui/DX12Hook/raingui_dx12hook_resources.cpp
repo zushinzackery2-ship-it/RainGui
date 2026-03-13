@@ -38,9 +38,14 @@ namespace RainGuiDx12HookInternal
         }
 
         g_state.bufferCount = desc.BufferCount;
-        if (g_state.bufferCount == 0 || g_state.bufferCount > MaxBackBuffers)
+        if (g_state.bufferCount == 0)
         {
-            g_state.bufferCount = 2;
+            return false;
+        }
+
+        if (g_state.bufferCount > MaxBackBuffers)
+        {
+            g_state.bufferCount = MaxBackBuffers;
         }
 
         g_state.backBufferFormat = desc.BufferDesc.Format;
@@ -112,7 +117,18 @@ namespace RainGuiDx12HookInternal
         }
 
         g_state.fenceEvent = CreateEventW(nullptr, FALSE, FALSE, nullptr);
-        return g_state.fenceEvent != nullptr;
+        if (!g_state.fenceEvent)
+        {
+            return false;
+        }
+
+        g_state.fenceCounter = 0;
+        for (UINT index = 0; index < g_state.bufferCount; ++index)
+        {
+            g_state.fenceValues[index] = 0;
+        }
+
+        return true;
     }
 
     void CleanupRenderResources()
