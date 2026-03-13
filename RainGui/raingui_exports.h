@@ -6,7 +6,9 @@
 #include "raingui_impl_dx10.h"
 #include "raingui_impl_dx11.h"
 #include "raingui_impl_dx12.h"
+#include "raingui_dx12hook_types.h"
 
+#undef RAINGUI_API
 #ifdef RAINGUI_BUILD_DLL
 #define RAINGUI_API extern "C" __declspec(dllexport)
 #else
@@ -29,6 +31,7 @@ RAINGUI_API ImDrawData* RainGui_GetDrawData();
 RAINGUI_API void RainGui_StyleColorsDark();
 RAINGUI_API void RainGui_StyleColorsLight();
 RAINGUI_API void RainGui_StyleColorsClassic();
+RAINGUI_API void RainGui_ApplyOverlayDefaults();
 
 // ---- 窗口 ----
 RAINGUI_API bool RainGui_Begin(const char* name, bool* pOpen, int flags);
@@ -89,3 +92,11 @@ RAINGUI_API void RainGui_DX12_NewFrame();
 RAINGUI_API void RainGui_DX12_RenderDrawData(ImDrawData* drawData, ID3D12GraphicsCommandList* graphicsCommandList);
 RAINGUI_API bool RainGui_DX12_CreateDeviceObjects();
 RAINGUI_API void RainGui_DX12_InvalidateDeviceObjects();
+
+RAINGUI_API void RainGui_DX12Hook_FillDefaultDesc(RainGuiDx12HookDesc* desc);
+RAINGUI_API bool RainGui_DX12Hook_Init(const RainGuiDx12HookDesc* desc);
+RAINGUI_API bool RainGui_DX12Hook_InitDefaultTest();
+RAINGUI_API void RainGui_DX12Hook_Shutdown();
+RAINGUI_API bool RainGui_DX12Hook_IsInstalled();
+RAINGUI_API bool RainGui_DX12Hook_IsReady();
+RAINGUI_API const RainGuiDx12HookRuntime* RainGui_DX12Hook_GetRuntime();

@@ -1,6 +1,7 @@
 #include <d3d12.h>
 
 #include "raingui_exports.h"
+#include "raingui_impl_dx12hook.h"
 
 RAINGUI_API RainGuiContext* RainGui_CreateContext()
 {
@@ -321,4 +322,34 @@ RAINGUI_API bool RainGui_DX12_CreateDeviceObjects()
 RAINGUI_API void RainGui_DX12_InvalidateDeviceObjects()
 {
     RainGui_ImplDX12_InvalidateDeviceObjects();
+}
+
+RAINGUI_API void RainGui_DX12Hook_FillDefaultDesc(RainGuiDx12HookDesc* desc)
+{
+    RainGuiDx12Hook::FillDefaultDesc(desc);
+}
+
+RAINGUI_API bool RainGui_DX12Hook_Init(const RainGuiDx12HookDesc* desc)
+{
+    return RainGuiDx12Hook::Init(desc);
+}
+
+RAINGUI_API void RainGui_DX12Hook_Shutdown()
+{
+    RainGuiDx12Hook::Shutdown();
+}
+
+RAINGUI_API bool RainGui_DX12Hook_IsInstalled()
+{
+    return RainGuiDx12Hook::IsInstalled();
+}
+
+RAINGUI_API bool RainGui_DX12Hook_IsReady()
+{
+    return RainGuiDx12Hook::IsReady();
+}
+
+RAINGUI_API const RainGuiDx12HookRuntime* RainGui_DX12Hook_GetRuntime()
+{
+    return RainGuiDx12Hook::GetRuntime();
 }

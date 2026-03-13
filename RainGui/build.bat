@@ -13,6 +13,9 @@ if not exist "%BIN_DIR%" mkdir "%BIN_DIR%"
 echo [1/2] Compiling RainGui DLL...
 cl /nologo /c /std:c++17 /EHsc /O2 /MT /W3 /DRAINGUI_BUILD_DLL /I"." /Fo"%OBJ_DIR%\\" ^
     raingui_exports.cpp ^
+    raingui_exports_defaults.cpp ^
+    raingui_exports_dx12hook_test.cpp ^
+    raingui_defaults.cpp ^
     raingui.cpp ^
     raingui_draw.cpp ^
     raingui_widgets.cpp ^
@@ -20,6 +23,14 @@ cl /nologo /c /std:c++17 /EHsc /O2 /MT /W3 /DRAINGUI_BUILD_DLL /I"." /Fo"%OBJ_DI
     raingui_impl_dx9.cpp ^
     raingui_impl_dx10.cpp ^
     raingui_impl_dx12.cpp ^
+    DX12Hook\raingui_dx12hook_probe.cpp ^
+    DX12Hook\raingui_dx12hook_bootstrap.cpp ^
+    DX12Hook\raingui_dx12hook_debug.cpp ^
+    DX12Hook\raingui_dx12hook_resources.cpp ^
+    DX12Hook\raingui_dx12hook_context.cpp ^
+    DX12Hook\raingui_dx12hook_hooks_common.cpp ^
+    DX12Hook\raingui_dx12hook_hooks_present.cpp ^
+    DX12Hook\raingui_dx12hook_hooks_aux.cpp ^
     raingui_impl_win32.cpp ^
     raingui_impl_dx11.cpp
 if errorlevel 1 goto :error
