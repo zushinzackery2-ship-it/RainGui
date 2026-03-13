@@ -1,6 +1,6 @@
 # RainGui
 
-`RainGui` 是一个以 DLL 形态交付的 ImGui 私有化分支，当前同时保留两条接入路线：
+`RainGui` 是一个源码库仓库，核心内容是 `RainGui/` 下的源码与模块；`DLL / LIB` 只是构建产物。当前同时保留两条接入路线：
 
 - `RainGui/`
   - 核心库，包含 RainGui 本体、Win32/DX9/DX10/DX11/DX12 backend、NVIDIA overlay backend、共享内存通信和新的 DX12Hook 模块
