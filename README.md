@@ -13,7 +13,7 @@
 > **支持库定位** — 源码直接编入工程使用，DLL 为可选分发形态
 
 > [!IMPORTANT]
-> **DX11 / DX12 Hook** — 纯 VMT 实现，自动探测 vtable、自动管理资源生命周期、自动处理 Device Lost 和热卸载
+> **DX11 / DX12 Hook** — 纯 VMT 实现，自动探测 VTable、自动管理资源生命周期、自动处理 Device Lost 和热卸载
 >
 > **NVIDIA Overlay** — 自动发现窗口并接管渲染，自动处理消息转发、点击穿透、反截图
 
