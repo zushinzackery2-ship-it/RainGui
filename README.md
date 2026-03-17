@@ -4,17 +4,18 @@
 
 基于 ImGui 的即插即用 Overlay 支持库
 
-DX11 / DX12 纯 VMT Hook，自动探测 vtable、自动管理资源生命周期、自动处理 Device Lost 和热卸载
-
-NVIDIA Overlay 路线自动发现窗口并接管渲染
-
-> [!NOTE]
-> **支持库** — 源码直接编入工程使用，DLL 为可选分发形态
-
 <!-- 在这里放一张效果截图或 GIF -->
 <!-- ![RainGui Demo](docs/demo.gif) -->
 
 </div>
+
+> [!NOTE]
+> **支持库定位** — 源码直接编入工程使用，DLL 为可选分发形态
+
+> [!IMPORTANT]
+> **DX11 / DX12 Hook** — 纯 VMT 实现，自动探测 vtable、自动管理资源生命周期、自动处理 Device Lost 和热卸载
+>
+> **NVIDIA Overlay** — 自动发现窗口并接管渲染，自动处理消息转发、点击穿透、反截图
 
 ## 功能
 
