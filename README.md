@@ -4,6 +4,13 @@
 
 基于 ImGui 的即插即用 Overlay 支持库
 
+<p>
+    <img alt="License" src="https://img.shields.io/badge/License-MIT-2ea44f" />
+    <img alt="Platform" src="https://img.shields.io/badge/Platform-Windows%20x64-0078D6" />
+    <img alt="Toolchain" src="https://img.shields.io/badge/Toolchain-VS2022-5C2D91" />
+    <img alt="Build" src="https://img.shields.io/badge/Build-Release%20%7C%20MT-FFB000" />
+</p>
+
 <!-- 在这里放一张效果截图或 GIF -->
 <!-- ![RainGui Demo](docs/demo.gif) -->
 
@@ -120,3 +127,12 @@ RainGuiDx12HookTest/         DX12 测试载荷
 ## 许可
 
 基于 ImGui 修改，遵循 MIT 许可证。
+
+## 封底
+
+- License：MIT
+- Platform：Windows x64
+- Toolchain：Visual Studio 2022
+- Build：x64 Release / MT
+- Delivery：源码直编与 DLL 分发均可
+- Keywords：ImGui / DX11 / DX12 / VMT Hook / NVIDIA Overlay
