@@ -128,11 +128,8 @@ RainGuiDx12HookTest/         DX12 测试载荷
 
 基于 ImGui 修改，遵循 MIT 许可证。
 
-## 封底
+<div align="center">
 
-- License：MIT
-- Platform：Windows x64
-- Toolchain：Visual Studio 2022
-- Build：x64 Release / MT
-- Delivery：源码直编与 DLL 分发均可
-- Keywords：ImGui / DX11 / DX12 / VMT Hook / NVIDIA Overlay
+**Platform:** Windows x64 | **License:** MIT
+
+</div>
