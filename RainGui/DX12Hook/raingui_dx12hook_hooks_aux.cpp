@@ -24,6 +24,11 @@ namespace
 
 namespace RainGuiDx12HookInternal
 {
+    namespace
+    {
+        LONG g_queueCaptureLogCount = 0;
+    }
+
     HRESULT STDMETHODCALLTYPE HookResizeBuffers(
         IDXGISwapChain* swapChain,
         UINT bufferCount,
@@ -92,6 +97,13 @@ namespace RainGuiDx12HookInternal
                 D3D12_COMMAND_QUEUE_DESC desc = queue->GetDesc();
                 if (desc.Type == D3D12_COMMAND_LIST_TYPE_DIRECT)
                 {
+                    if (InterlockedIncrement(&g_queueCaptureLogCount) <= 8)
+                    {
+                        RAINGUI_DX12HOOK_LOG(
+                            "HookExecuteCommandLists captured DIRECT queue=%p numCommandLists=%u",
+                            queue,
+                            numCommandLists);
+                    }
                     queue->AddRef();
                     auto* oldQueue = reinterpret_cast<ID3D12CommandQueue*>(
                         InterlockedExchangePointer(

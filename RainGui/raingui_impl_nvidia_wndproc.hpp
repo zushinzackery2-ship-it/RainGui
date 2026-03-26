@@ -13,8 +13,56 @@ extern RAINGUI_IMPL_API LRESULT RainGui_ImplWin32_WndProcHandler(
 
 namespace
 {
-    // 只在 NVIDIA 后端编译单元中使用，用于接管原始窗口消息。
-    static WNDPROC s_rainGuiNvidiaOrigWndProc = nullptr;
+    // 退出阶段可能同时遇到窗口销毁和主动 shutdown，这里用原子交换保证只恢复一次 WndProc。
+    static PVOID volatile s_rainGuiNvidiaOrigWndProc = nullptr;
+    static PVOID volatile s_rainGuiNvidiaHookedWindow = nullptr;
+
+    LRESULT CALLBACK RainGuiNvidiaWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
+    WNDPROC RainGuiNvidia_GetOrigWndProc()
+    {
+        return reinterpret_cast<WNDPROC>(
+            InterlockedCompareExchangePointer(&s_rainGuiNvidiaOrigWndProc, nullptr, nullptr)
+        );
+    }
+
+    WNDPROC RainGuiNvidia_DetachOrigWndProc()
+    {
+        return reinterpret_cast<WNDPROC>(
+            InterlockedExchangePointer(&s_rainGuiNvidiaOrigWndProc, nullptr)
+        );
+    }
+
+    HWND RainGuiNvidia_GetHookedWindow()
+    {
+        return reinterpret_cast<HWND>(
+            InterlockedCompareExchangePointer(&s_rainGuiNvidiaHookedWindow, nullptr, nullptr)
+        );
+    }
+
+    void RainGuiNvidia_SetHookedWindow(HWND hWnd)
+    {
+        InterlockedExchangePointer(&s_rainGuiNvidiaHookedWindow, hWnd);
+    }
+
+    void RainGuiNvidia_ClearHookedWindow()
+    {
+        InterlockedExchangePointer(&s_rainGuiNvidiaHookedWindow, nullptr);
+    }
+
+    void RainGuiNvidia_RestoreOriginalWndProc(HWND hWnd, WNDPROC originalWndProc)
+    {
+        if (!hWnd || !originalWndProc || !IsWindow(hWnd))
+        {
+            return;
+        }
+
+        LONG_PTR currentWndProc = GetWindowLongPtrA(hWnd, GWLP_WNDPROC);
+        if (reinterpret_cast<WNDPROC>(currentWndProc) == RainGuiNvidiaWndProc)
+        {
+            SetWindowLongPtrA(hWnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(originalWndProc));
+        }
+    }
 
     LRESULT CALLBACK RainGuiNvidiaWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
@@ -22,20 +70,21 @@ namespace
 
         if (msg == WM_NCDESTROY)
         {
-            WNDPROC originalWndProc = s_rainGuiNvidiaOrigWndProc;
-            s_rainGuiNvidiaOrigWndProc = nullptr;
+            WNDPROC originalWndProc = RainGuiNvidia_DetachOrigWndProc();
+            RainGuiNvidia_ClearHookedWindow();
             if (originalWndProc)
             {
-                SetWindowLongPtrA(hWnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(originalWndProc));
+                RainGuiNvidia_RestoreOriginalWndProc(hWnd, originalWndProc);
                 return CallWindowProcA(originalWndProc, hWnd, msg, wParam, lParam);
             }
 
             return DefWindowProcA(hWnd, msg, wParam, lParam);
         }
 
-        if (s_rainGuiNvidiaOrigWndProc)
+        WNDPROC originalWndProc = RainGuiNvidia_GetOrigWndProc();
+        if (originalWndProc)
         {
-            return CallWindowProcA(s_rainGuiNvidiaOrigWndProc, hWnd, msg, wParam, lParam);
+            return CallWindowProcA(originalWndProc, hWnd, msg, wParam, lParam);
         }
 
         return DefWindowProcA(hWnd, msg, wParam, lParam);
@@ -49,9 +98,9 @@ inline bool RainGuiNvidia_InstallWndProcHook(HWND hWnd)
         return false;
     }
 
-    if (s_rainGuiNvidiaOrigWndProc)
+    if (RainGuiNvidia_GetOrigWndProc())
     {
-        return true;
+        return RainGuiNvidia_GetHookedWindow() == hWnd;
     }
 
     SetLastError(0);
@@ -66,23 +115,38 @@ inline bool RainGuiNvidia_InstallWndProcHook(HWND hWnd)
         return false;
     }
 
-    s_rainGuiNvidiaOrigWndProc = reinterpret_cast<WNDPROC>(previousWndProc);
-    return s_rainGuiNvidiaOrigWndProc != nullptr;
+    WNDPROC originalWndProc = reinterpret_cast<WNDPROC>(previousWndProc);
+    if (!originalWndProc)
+    {
+        return false;
+    }
+
+    PVOID exchangeResult = InterlockedCompareExchangePointer(
+        &s_rainGuiNvidiaOrigWndProc,
+        reinterpret_cast<PVOID>(originalWndProc),
+        nullptr
+    );
+    if (exchangeResult != nullptr)
+    {
+        // 为什么恢复：避免并发重复安装时把窗口消息链写乱。
+        SetWindowLongPtrA(hWnd, GWLP_WNDPROC, previousWndProc);
+        return false;
+    }
+
+    RainGuiNvidia_SetHookedWindow(hWnd);
+    return true;
 }
 
 inline void RainGuiNvidia_RemoveWndProcHook(HWND hWnd)
 {
-    if (!hWnd || !IsWindow(hWnd))
-    {
-        s_rainGuiNvidiaOrigWndProc = nullptr;
-        return;
-    }
+    WNDPROC originalWndProc = RainGuiNvidia_DetachOrigWndProc();
+    HWND hookedWindow = hWnd ? hWnd : RainGuiNvidia_GetHookedWindow();
+    RainGuiNvidia_ClearHookedWindow();
 
-    if (!s_rainGuiNvidiaOrigWndProc)
+    if (!originalWndProc)
     {
         return;
     }
 
-    SetWindowLongPtrA(hWnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(s_rainGuiNvidiaOrigWndProc));
-    s_rainGuiNvidiaOrigWndProc = nullptr;
+    RainGuiNvidia_RestoreOriginalWndProc(hookedWindow, originalWndProc);
 }

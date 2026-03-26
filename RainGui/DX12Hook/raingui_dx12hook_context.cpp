@@ -6,6 +6,14 @@ namespace RainGuiDx12HookInternal
     bool InitializeBackends(IDXGISwapChain* swapChain)
     {
         UpdateRuntimeSnapshot(swapChain);
+        RAINGUI_DX12HOOK_LOG(
+            "InitializeBackends begin: swapChain=%p hwnd=%p device=%p queue=%p buffers=%u format=%u",
+            swapChain,
+            g_state.gameWindow,
+            g_state.device,
+            g_state.commandQueue,
+            g_state.bufferCount,
+            static_cast<unsigned int>(g_state.backBufferFormat));
 
         if (!g_state.context)
         {
@@ -14,6 +22,7 @@ namespace RainGuiDx12HookInternal
             {
                 if (!g_state.desc.autoCreateContext)
                 {
+                    RAINGUI_DX12HOOK_LOG("InitializeBackends failed: autoCreateContext disabled");
                     return false;
                 }
 
@@ -21,6 +30,7 @@ namespace RainGuiDx12HookInternal
                 context = RainGui::CreateContext();
                 if (!context)
                 {
+                    RAINGUI_DX12HOOK_LOG("InitializeBackends failed: CreateContext returned null");
                     return false;
                 }
 
@@ -50,6 +60,7 @@ namespace RainGuiDx12HookInternal
 
         if (!RainGui_ImplWin32_Init(g_state.gameWindow))
         {
+            RAINGUI_DX12HOOK_LOG("InitializeBackends failed: RainGui_ImplWin32_Init hwnd=%p", g_state.gameWindow);
             return false;
         }
 
@@ -62,6 +73,11 @@ namespace RainGuiDx12HookInternal
                 g_state.srvHeap->GetGPUDescriptorHandleForHeapStart()))
         {
             RainGui_ImplWin32_Shutdown();
+            RAINGUI_DX12HOOK_LOG(
+                "InitializeBackends failed: RainGui_ImplDX12_Init device=%p buffers=%u format=%u",
+                g_state.device,
+                g_state.bufferCount,
+                static_cast<unsigned int>(g_state.backBufferFormat));
             return false;
         }
 
@@ -85,6 +101,11 @@ namespace RainGuiDx12HookInternal
         g_state.trackedSwapChain = swapChain;
         g_state.backendReady = true;
         g_state.deviceLost = false;
+        RAINGUI_DX12HOOK_LOG(
+            "InitializeBackends success: trackedSwapChain=%p hwnd=%p backendReady=%d",
+            g_state.trackedSwapChain,
+            g_state.gameWindow,
+            g_state.backendReady ? 1 : 0);
         return true;
     }
 

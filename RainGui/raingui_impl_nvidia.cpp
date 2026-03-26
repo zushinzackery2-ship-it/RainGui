@@ -204,27 +204,36 @@ bool RainGui_Nvidia_Init()
 
 void RainGui_Nvidia_Shutdown()
 {
+    HWND hwnd = s_hwnd;
+    s_hwnd = nullptr;
+
     RainGui_Comm_Shutdown();
-    RainGuiNvidia_RemoveWndProcHook(s_hwnd);
+    RainGuiNvidia_RemoveWndProcHook(hwnd);
     RainGui_ImplDX11_Shutdown();
     RainGui_ImplWin32_Shutdown();
     CleanupD3D11();
 
     // 恢复 NVIDIA 窗口原始状态
-    if (s_hwnd && IsWindow(s_hwnd))
+    if (hwnd && IsWindow(hwnd))
     {
-        SetWindowLongPtrA(s_hwnd, GWL_EXSTYLE, s_origExStyle);
-        SetWindowDisplayAffinity(s_hwnd, WDA_NONE);
-        ShowWindow(s_hwnd, SW_HIDE);
+        SetWindowLongPtrA(hwnd, GWL_EXSTYLE, s_origExStyle);
+        SetWindowDisplayAffinity(hwnd, WDA_NONE);
+        ShowWindow(hwnd, SW_HIDE);
     }
-
-    s_hwnd = nullptr;
 }
 
 void RainGui_Nvidia_NewFrame()
 {
     if (!s_hwnd)
+    {
         return;
+    }
+
+    if (!IsWindow(s_hwnd))
+    {
+        s_hwnd = nullptr;
+        return;
+    }
 
     // 强制维持窗口置顶 + 尺寸（NVIDIA Alt+Z 会重置）
     SetWindowPos(s_hwnd, HWND_TOPMOST, 0, 0,
@@ -259,6 +268,11 @@ void RainGui_Nvidia_NewFrame()
 
 void RainGui_Nvidia_Present()
 {
+    if (!s_context || !s_rtv || !s_swapChain)
+    {
+        return;
+    }
+
     float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
     s_context->OMSetRenderTargets(1, &s_rtv, nullptr);
     s_context->ClearRenderTargetView(s_rtv, clearColor);

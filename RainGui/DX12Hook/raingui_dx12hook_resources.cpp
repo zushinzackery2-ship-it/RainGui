@@ -34,12 +34,14 @@ namespace RainGuiDx12HookInternal
         DXGI_SWAP_CHAIN_DESC desc = {};
         if (!swapChain || FAILED(swapChain->GetDesc(&desc)))
         {
+            RAINGUI_DX12HOOK_LOG("CreateRenderResources failed: GetDesc swapChain=%p", swapChain);
             return false;
         }
 
         g_state.bufferCount = desc.BufferCount;
         if (g_state.bufferCount == 0)
         {
+            RAINGUI_DX12HOOK_LOG("CreateRenderResources failed: bufferCount=0");
             return false;
         }
 
@@ -56,6 +58,7 @@ namespace RainGuiDx12HookInternal
 
         if (!g_state.device && FAILED(swapChain->GetDevice(IID_PPV_ARGS(&g_state.device))))
         {
+            RAINGUI_DX12HOOK_LOG("CreateRenderResources failed: GetDevice");
             return false;
         }
 
@@ -64,6 +67,7 @@ namespace RainGuiDx12HookInternal
         rtvDesc.NumDescriptors = g_state.bufferCount;
         if (FAILED(g_state.device->CreateDescriptorHeap(&rtvDesc, IID_PPV_ARGS(&g_state.rtvHeap))))
         {
+            RAINGUI_DX12HOOK_LOG("CreateRenderResources failed: CreateDescriptorHeap RTV");
             return false;
         }
 
@@ -76,6 +80,7 @@ namespace RainGuiDx12HookInternal
         srvDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
         if (FAILED(g_state.device->CreateDescriptorHeap(&srvDesc, IID_PPV_ARGS(&g_state.srvHeap))))
         {
+            RAINGUI_DX12HOOK_LOG("CreateRenderResources failed: CreateDescriptorHeap SRV");
             return false;
         }
 
@@ -86,11 +91,13 @@ namespace RainGuiDx12HookInternal
                     D3D12_COMMAND_LIST_TYPE_DIRECT,
                     IID_PPV_ARGS(&g_state.commandAllocators[index]))))
             {
+                RAINGUI_DX12HOOK_LOG("CreateRenderResources failed: CreateCommandAllocator index=%u", index);
                 return false;
             }
 
             if (FAILED(swapChain->GetBuffer(index, IID_PPV_ARGS(&g_state.backBuffers[index]))))
             {
+                RAINGUI_DX12HOOK_LOG("CreateRenderResources failed: GetBuffer index=%u", index);
                 return false;
             }
 
@@ -106,6 +113,7 @@ namespace RainGuiDx12HookInternal
                 nullptr,
                 IID_PPV_ARGS(&g_state.commandList))))
         {
+            RAINGUI_DX12HOOK_LOG("CreateRenderResources failed: CreateCommandList");
             return false;
         }
 
@@ -113,12 +121,14 @@ namespace RainGuiDx12HookInternal
 
         if (FAILED(g_state.device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&g_state.fence))))
         {
+            RAINGUI_DX12HOOK_LOG("CreateRenderResources failed: CreateFence");
             return false;
         }
 
         g_state.fenceEvent = CreateEventW(nullptr, FALSE, FALSE, nullptr);
         if (!g_state.fenceEvent)
         {
+            RAINGUI_DX12HOOK_LOG("CreateRenderResources failed: CreateEventW");
             return false;
         }
 
@@ -128,6 +138,12 @@ namespace RainGuiDx12HookInternal
             g_state.fenceValues[index] = 0;
         }
 
+        RAINGUI_DX12HOOK_LOG(
+            "CreateRenderResources success: swapChain=%p device=%p buffers=%u format=%u",
+            swapChain,
+            g_state.device,
+            g_state.bufferCount,
+            static_cast<unsigned int>(g_state.backBufferFormat));
         return true;
     }
 

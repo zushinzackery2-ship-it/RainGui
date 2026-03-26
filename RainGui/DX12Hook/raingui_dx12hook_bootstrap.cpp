@@ -104,6 +104,7 @@ namespace RainGuiDx12HookInternal
         auto rollback = []()
         {
             RestoreVtable(g_state.probe.swapChainVtable, 8, reinterpret_cast<void*>(g_state.originalPresent));
+            RestoreVtable(g_state.probe.swapChainVtable, 22, reinterpret_cast<void*>(g_state.originalPresent1));
             RestoreVtable(
                 g_state.probe.swapChainVtable,
                 13,
@@ -113,6 +114,7 @@ namespace RainGuiDx12HookInternal
                 10,
                 reinterpret_cast<void*>(g_state.originalExecuteCommandLists));
             g_state.originalPresent = nullptr;
+            g_state.originalPresent1 = nullptr;
             g_state.originalResizeBuffers = nullptr;
             g_state.originalExecuteCommandLists = nullptr;
         };
@@ -125,6 +127,12 @@ namespace RainGuiDx12HookInternal
         {
             return false;
         }
+
+        PatchVtable(
+            g_state.probe.swapChainVtable,
+            22,
+            reinterpret_cast<void*>(&HookPresent1),
+            reinterpret_cast<void**>(&g_state.originalPresent1));
 
         if (!PatchVtable(
                 g_state.probe.swapChainVtable,
@@ -152,6 +160,7 @@ namespace RainGuiDx12HookInternal
     void UninstallHooks()
     {
         RestoreVtable(g_state.probe.swapChainVtable, 8, reinterpret_cast<void*>(g_state.originalPresent));
+        RestoreVtable(g_state.probe.swapChainVtable, 22, reinterpret_cast<void*>(g_state.originalPresent1));
         RestoreVtable(
             g_state.probe.swapChainVtable,
             13,
@@ -170,6 +179,7 @@ namespace RainGuiDx12HookInternal
         }
 
         g_state.originalPresent = nullptr;
+        g_state.originalPresent1 = nullptr;
         g_state.originalResizeBuffers = nullptr;
         g_state.originalResizeBuffers1 = nullptr;
         g_state.originalExecuteCommandLists = nullptr;
@@ -195,6 +205,7 @@ namespace RainGuiDx12Hook
 
         if (g_state.installed)
         {
+            RAINGUI_DX12HOOK_LOG("Init called while already installed");
             return true;
         }
 
@@ -223,6 +234,7 @@ namespace RainGuiDx12Hook
 
         if (!InstallHooks())
         {
+            RAINGUI_DX12HOOK_LOG("Init failed: InstallHooks returned false");
             if (g_state.renderCsReady)
             {
                 DeleteCriticalSection(&g_state.renderCs);
@@ -233,6 +245,12 @@ namespace RainGuiDx12Hook
         }
 
         g_state.installed = true;
+        RAINGUI_DX12HOOK_LOG(
+            "Init success: installed=1 present=%p present1=%p resize=%p execute=%p",
+            g_state.originalPresent,
+            g_state.originalPresent1,
+            g_state.originalResizeBuffers,
+            g_state.originalExecuteCommandLists);
         return true;
     }
 
@@ -298,6 +316,7 @@ namespace RainGuiDx12Hook
 
         ZeroMemory(&g_state.desc, sizeof(g_state.desc));
         ResetRuntime();
+        RAINGUI_DX12HOOK_LOG("Shutdown complete");
     }
 
     bool IsInstalled()

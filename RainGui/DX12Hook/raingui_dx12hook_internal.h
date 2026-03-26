@@ -10,6 +10,13 @@
 #include "../raingui_impl_dx12hook.h"
 #include "../raingui_impl_win32.h"
 
+#if __has_include("ConsoleLogger.h")
+#include "ConsoleLogger.h"
+#define RAINGUI_DX12HOOK_LOG(...) ConsoleLogger::Log(__VA_ARGS__)
+#else
+#define RAINGUI_DX12HOOK_LOG(...) do { } while (0)
+#endif
+
 namespace RainGuiDx12HookInternal
 {
     static constexpr UINT MaxBackBuffers = 8;
@@ -18,6 +25,12 @@ namespace RainGuiDx12HookInternal
         IDXGISwapChain* swapChain,
         UINT syncInterval,
         UINT flags);
+
+    typedef HRESULT(STDMETHODCALLTYPE* Present1Fn)(
+        IDXGISwapChain1* swapChain,
+        UINT syncInterval,
+        UINT flags,
+        const DXGI_PRESENT_PARAMETERS* presentParameters);
 
     typedef HRESULT(STDMETHODCALLTYPE* ResizeBuffersFn)(
         IDXGISwapChain* swapChain,
@@ -55,6 +68,7 @@ namespace RainGuiDx12HookInternal
         Dx12HookProbeData probe;
 
         PresentFn originalPresent;
+        Present1Fn originalPresent1;
         ResizeBuffersFn originalResizeBuffers;
         ResizeBuffers1Fn originalResizeBuffers1;
         ExecuteCommandListsFn originalExecuteCommandLists;
@@ -144,6 +158,13 @@ namespace RainGuiDx12HookInternal
         UINT flags,
         DWORD* exceptionCode = nullptr);
 
+    HRESULT CallOriginalPresent1Safe(
+        IDXGISwapChain1* swapChain,
+        UINT syncInterval,
+        UINT flags,
+        const DXGI_PRESENT_PARAMETERS* presentParameters,
+        DWORD* exceptionCode = nullptr);
+
     bool CallOriginalExecuteSafe(
         ID3D12CommandQueue* queue,
         UINT numCommandLists,
@@ -163,6 +184,12 @@ namespace RainGuiDx12HookInternal
         IDXGISwapChain* swapChain,
         UINT syncInterval,
         UINT flags);
+
+    HRESULT STDMETHODCALLTYPE HookPresent1(
+        IDXGISwapChain1* swapChain,
+        UINT syncInterval,
+        UINT flags,
+        const DXGI_PRESENT_PARAMETERS* presentParameters);
 
     HRESULT STDMETHODCALLTYPE HookResizeBuffers(
         IDXGISwapChain* swapChain,

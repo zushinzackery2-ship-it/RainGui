@@ -60,6 +60,23 @@ namespace RainGuiDx12HookInternal
 
         if (g_state.desc.blockInputWhenVisible && IsInteractiveVisible())
         {
+            bool wantMouse = false;
+            bool wantKeyboard = false;
+
+            __try
+            {
+                if (g_state.context)
+                {
+                    RainGui::SetCurrentContext(g_state.context);
+                    RainGuiIO& io = RainGui::GetIO();
+                    wantMouse = io.WantCaptureMouse;
+                    wantKeyboard = io.WantCaptureKeyboard || io.WantTextInput;
+                }
+            }
+            __except (EXCEPTION_EXECUTE_HANDLER)
+            {
+            }
+
             switch (msg)
             {
             case WM_LBUTTONDOWN:
@@ -74,12 +91,21 @@ namespace RainGuiDx12HookInternal
             case WM_MOUSEWHEEL:
             case WM_MOUSEHWHEEL:
             case WM_MOUSEMOVE:
+                if (wantMouse)
+                {
+                    return TRUE;
+                }
+                break;
             case WM_KEYDOWN:
             case WM_KEYUP:
             case WM_SYSKEYDOWN:
             case WM_SYSKEYUP:
             case WM_CHAR:
-                return TRUE;
+                if (wantKeyboard)
+                {
+                    return TRUE;
+                }
+                break;
             default:
                 break;
             }
@@ -104,6 +130,24 @@ namespace RainGuiDx12HookInternal
         }
 
         return g_state.originalPresent;
+    }
+
+    Present1Fn ResolvePresent1Fn(IDXGISwapChain1* swapChain)
+    {
+        if (swapChain)
+        {
+            auto** vtable = *reinterpret_cast<void***>(swapChain);
+            if (vtable)
+            {
+                auto fn = reinterpret_cast<Present1Fn>(vtable[22]);
+                if (fn && fn != HookPresent1)
+                {
+                    return fn;
+                }
+            }
+        }
+
+        return g_state.originalPresent1;
     }
 
     ExecuteCommandListsFn ResolveExecuteFn(ID3D12CommandQueue* queue)
@@ -144,6 +188,39 @@ namespace RainGuiDx12HookInternal
         __try
         {
             return fn(swapChain, syncInterval, flags);
+        }
+        __except (EXCEPTION_EXECUTE_HANDLER)
+        {
+            if (exceptionCode)
+            {
+                *exceptionCode = GetExceptionCode();
+            }
+
+            return E_FAIL;
+        }
+    }
+
+    HRESULT CallOriginalPresent1Safe(
+        IDXGISwapChain1* swapChain,
+        UINT syncInterval,
+        UINT flags,
+        const DXGI_PRESENT_PARAMETERS* presentParameters,
+        DWORD* exceptionCode)
+    {
+        if (exceptionCode)
+        {
+            *exceptionCode = 0;
+        }
+
+        Present1Fn fn = ResolvePresent1Fn(swapChain);
+        if (!fn)
+        {
+            return E_FAIL;
+        }
+
+        __try
+        {
+            return fn(swapChain, syncInterval, flags, presentParameters);
         }
         __except (EXCEPTION_EXECUTE_HANDLER)
         {

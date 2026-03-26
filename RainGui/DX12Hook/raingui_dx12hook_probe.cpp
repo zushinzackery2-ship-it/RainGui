@@ -56,11 +56,13 @@ namespace RainGuiDx12HookInternal
     {
         probeData.commandQueueVtable = nullptr;
         probeData.swapChainVtable = nullptr;
+        RAINGUI_DX12HOOK_LOG("ProbeVtables begin");
 
         WNDCLASSEXW windowClass = {};
         HWND windowHandle = nullptr;
         if (!CreateProbeWindow(windowClass, windowHandle))
         {
+            RAINGUI_DX12HOOK_LOG("ProbeVtables failed: CreateProbeWindow");
             return false;
         }
 
@@ -68,6 +70,7 @@ namespace RainGuiDx12HookInternal
         HMODULE d3d12Module = LoadLibraryW(L"d3d12.dll");
         if (!dxgiModule || !d3d12Module)
         {
+            RAINGUI_DX12HOOK_LOG("ProbeVtables failed: LoadLibrary dxgi=%p d3d12=%p", dxgiModule, d3d12Module);
             DestroyProbeWindow(windowClass, windowHandle);
             return false;
         }
@@ -78,6 +81,7 @@ namespace RainGuiDx12HookInternal
             GetProcAddress(d3d12Module, "D3D12CreateDevice"));
         if (!createDxgiFactory || !d3d12CreateDevice)
         {
+            RAINGUI_DX12HOOK_LOG("ProbeVtables failed: missing exports CreateDXGIFactory=%p D3D12CreateDevice=%p", createDxgiFactory, d3d12CreateDevice);
             DestroyProbeWindow(windowClass, windowHandle);
             return false;
         }
@@ -171,6 +175,11 @@ namespace RainGuiDx12HookInternal
         }
 
         DestroyProbeWindow(windowClass, windowHandle);
+        RAINGUI_DX12HOOK_LOG(
+            "ProbeVtables end: success=%d queueVtable=%p swapChainVtable=%p",
+            success ? 1 : 0,
+            probeData.commandQueueVtable,
+            probeData.swapChainVtable);
         return success;
     }
 }

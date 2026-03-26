@@ -29,7 +29,7 @@
 ### DX11 / DX12 Hook
 
 - 纯 VMT hook，不引入 inline hook
-- DX12 覆盖 Present / ResizeBuffers / ResizeBuffers1 / ExecuteCommandLists
+- DX12 覆盖 Present / Present1 / ResizeBuffers / ResizeBuffers1 / ExecuteCommandLists
 - **全自动**：资源初始化、GPU Fence 同步、WndProc 接管、Device Lost 重建、Swapchain 热切换、安全卸载 — 全部内部处理，业务代码只需要写 `onRender` 回调
 - DX11 同等完成度，接口同构
 
