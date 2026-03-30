@@ -3,6 +3,8 @@
 #include "raingui_exports.h"
 #include "raingui_impl_dx11hook.h"
 #include "raingui_impl_dx12hook.h"
+#include <urh/urh.h>
+#include <vkh/vkh.h>
 
 RAINGUI_API RainGuiContext* RainGui_CreateContext()
 {
@@ -322,6 +324,71 @@ RAINGUI_API bool RainGui_DX11Hook_IsReady()
 RAINGUI_API const RainGuiDx11HookRuntime* RainGui_DX11Hook_GetRuntime()
 {
     return RainGuiDx11Hook::GetRuntime();
+}
+
+RAINGUI_API void RainGui_AutoHook_FillDefaultDesc(RainGuiAutoHookDesc* desc)
+{
+    URH::FillDefaultDesc(desc);
+}
+
+RAINGUI_API bool RainGui_AutoHook_Init(const RainGuiAutoHookDesc* desc)
+{
+    return URH::Init(desc);
+}
+
+RAINGUI_API void RainGui_AutoHook_Shutdown()
+{
+    URH::Shutdown();
+}
+
+RAINGUI_API bool RainGui_AutoHook_IsInstalled()
+{
+    return URH::IsInstalled();
+}
+
+RAINGUI_API bool RainGui_AutoHook_IsReady()
+{
+    return URH::IsReady();
+}
+
+RAINGUI_API const RainGuiAutoHookRuntime* RainGui_AutoHook_GetRuntime()
+{
+    return URH::GetRuntime();
+}
+
+RAINGUI_API void RainGui_AutoHook_GetDiagnostics(RainGuiAutoHookDiagnostics* diagnostics)
+{
+    URH::GetDiagnostics(diagnostics);
+}
+
+RAINGUI_API void RainGui_VulkanHook_FillDefaultDesc(RainGuiVulkanHookDesc* desc)
+{
+    VHK::FillDefaultDesc(desc);
+}
+
+RAINGUI_API bool RainGui_VulkanHook_Init(const RainGuiVulkanHookDesc* desc)
+{
+    return VHK::Init(desc);
+}
+
+RAINGUI_API void RainGui_VulkanHook_Shutdown()
+{
+    VHK::Shutdown();
+}
+
+RAINGUI_API bool RainGui_VulkanHook_IsInstalled()
+{
+    return VHK::IsInstalled();
+}
+
+RAINGUI_API bool RainGui_VulkanHook_IsReady()
+{
+    return VHK::IsReady();
+}
+
+RAINGUI_API const RainGuiVulkanHookRuntime* RainGui_VulkanHook_GetRuntime()
+{
+    return VHK::GetRuntime();
 }
 
 RAINGUI_API bool RainGui_DX12_Init(ID3D12Device* device, int numFramesInFlight, DXGI_FORMAT rtvFormat, ID3D12DescriptorHeap* cbvSrvHeap,

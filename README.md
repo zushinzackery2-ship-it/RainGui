@@ -1,135 +1,62 @@
-<div align="center">
-
 # RainGui
 
-基于 ImGui 的即插即用 Overlay 支持库
+轻量级即时模式 GUI 与后端辅助封装库。
 
-<p>
-    <img alt="License" src="https://img.shields.io/badge/License-MIT-2ea44f" />
-    <img alt="Platform" src="https://img.shields.io/badge/Platform-Windows%20x64-0078D6" />
-    <img alt="Toolchain" src="https://img.shields.io/badge/Toolchain-VS2022-5C2D91" />
-    <img alt="Build" src="https://img.shields.io/badge/Build-Release%20%7C%20MT-FFB000" />
-</p>
+## 定位
 
-<!-- 在这里放一张效果截图或 GIF -->
-<!-- ![RainGui Demo](docs/demo.gif) -->
+- GUI 层，不是底层图形 Hook 核心
+- 提供 Win32 / D3D 后端接线
+- 提供默认 overlay 风格和导出封装
+- 保留 `NVIDIA Overlay` 和共享内存通信相关模块
 
-</div>
+## 目录
 
-> [!NOTE]
-> **支持库定位** — 源码直接编入工程使用，DLL 为可选分发形态
+```text
+RainGui/
+├── RainGui/                 核心源码
+├── RainGuiDx11HookTest/     DX11 测试工程
+└── RainGuiDx12HookTest/     DX12 测试工程
+```
 
-> [!IMPORTANT]
-> **DX11 / DX12 Hook** — 纯 VMT 实现，自动探测 VTable、自动管理资源生命周期、自动处理 Device Lost 和热卸载
->
-> **NVIDIA Overlay** — 自动发现窗口并接管渲染，自动处理消息转发、点击穿透、反截图
+`RainGui/` 目录主要包含：
 
-## 功能
+- `raingui.*`
+- `raingui_impl_win32.*`
+- `raingui_impl_dx9/10/11/12.*`
+- `raingui_defaults.*`
+- `raingui_impl_nvidia.*`
+- `raingui_comm.*`
+- `raingui_exports.*`
 
-### DX11 / DX12 Hook
+## 依赖关系
 
-- 纯 VMT hook，不引入 inline hook
-- DX12 覆盖 Present / Present1 / ResizeBuffers / ResizeBuffers1 / ExecuteCommandLists
-- **全自动**：资源初始化、GPU Fence 同步、WndProc 接管、Device Lost 重建、Swapchain 热切换、安全卸载 — 全部内部处理，业务代码只需要写 `onRender` 回调
-- DX11 同等完成度，接口同构
+- `RainGui` 现在不再承载 DX11 / DX12 / Vulkan Hook 核心实现
+- Hook/runtime 探测已经下沉到 `Universal-Render-Hook` 和 `VulkanHook`
+- 上层业务可以同时依赖它们，但不该再把 `RainGui` 当底层 Hook 库
 
-### NVIDIA Overlay
+## 当前构建依赖
 
-- 劫持 NVIDIA `CEF-OSC-WIDGET` 窗口
-- **全自动**：窗口发现、D3D11 渲染上下文创建、消息转发、点击穿透、反截图
-- 源码级接入：将 `raingui_impl_nvidia.cpp` 编进目标工程即可使用
+如果要构建 `RainGui.dll` 的统一导出版本，默认会按当前同级目录查找：
 
-### 共享内存通信
+- `../Universal-Render-Hook/URH`
+- `../VulkanHook/VulkanHook`
 
-- 外部进程通过共享内存发送绘制命令（点、线、圆、矩形、文字）
-- 源码级接入：将 `raingui_comm.cpp` 编进目标工程即可使用
-
-### 通用
-
-- ImGui API 兼容，保留原生使用习惯
-- `RainGui_ApplyOverlayDefaults()` 一调即用的默认外观
-- DLL / LIB 双形态
-
-## 快速开始
-
-### 1. 构建
+也可以通过环境变量覆盖：
 
 ```powershell
-cd .\RainGui
-.\build.bat
+$env:URH_ROOT = 'F:\Deps\Universal-Render-Hook\URH'
+$env:VKH_ROOT = 'F:\Deps\VulkanHook\VulkanHook'
+.\RainGui\build.bat
 ```
 
-产物：`RainGui\bin\RainGui.dll` + `RainGui.lib`
+底层原生类型已经改为 `Urh* / Vkh*` 作为规范名。
+`RainGui*` 命名只保留在 `RainGui` 自己的转发头和导出层里。
 
-### 2. 最小接入（DX12 示例，DX11 同构）
+## 使用方式
 
-```cpp
-#include "raingui_exports.h"
-
-static void OnRender(const RainGuiDx12HookRuntime* runtime, void* userData)
-{
-    RainGui_Begin("Hello", nullptr, 0);
-    RainGui_Text("RainGui is running");
-    RainGui_End();
-}
-
-void Install()
-{
-    RainGuiDx12HookDesc desc = {};
-    RainGui_DX12Hook_FillDefaultDesc(&desc);
-    desc.onRender = OnRender;
-    desc.toggleVirtualKey = VK_INSERT;
-    desc.startVisible = true;
-    RainGui_DX12Hook_Init(&desc);
-}
-```
-
-### 3. 测试
-
-```powershell
-cd .\RainGuiDx12HookTest
-.\build.bat
-```
-
-注入到任意 DX12 程序，`INSERT` 切换显示，`END` 卸载退出。
-
-## 导出接口
-
-**DX11Hook**：`RainGui_DX11Hook_Init` / `Shutdown` / `IsInstalled` / `IsReady` / `GetRuntime` / `FillDefaultDesc`
-
-**DX12Hook**：`RainGui_DX12Hook_Init` / `Shutdown` / `IsInstalled` / `IsReady` / `GetRuntime` / `FillDefaultDesc`
-
-**通用**：`RainGui_ApplyOverlayDefaults`
-
-## 项目结构
-
-```
-RainGui/                     核心库 + Hook 实现
-├── DX11Hook/                DX11 VMT Hook
-├── DX12Hook/                DX12 VMT Hook
-├── raingui.*                核心源码
-├── raingui_exports.*        DLL 导出层
-├── raingui_defaults.*       默认外观
-├── raingui_impl_nvidia.*    NVIDIA Overlay
-├── raingui_comm.*           共享内存通信
-└── build.bat                构建脚本
-
-RainGuiDx11HookTest/         DX11 测试载荷
-RainGuiDx12HookTest/         DX12 测试载荷
-```
-
-## 依赖
-
-- Windows 10 / 11
-- Visual Studio 2022
-- x64 Release / MT
+当前更推荐源码级接入，按需把需要的 `.cpp/.h` 编进业务工程。
 
 ## 许可
 
-基于 ImGui 修改，遵循 MIT 许可证。
-
-<div align="center">
-
-**Platform:** Windows x64 | **License:** MIT
-
-</div>
+MIT，见根目录 `LICENSE`。  
+本仓库基于 Dear ImGui 整理维护，公开发布时建议保留上游许可证注释。

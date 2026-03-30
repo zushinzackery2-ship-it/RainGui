@@ -1,0 +1,24 @@
+#pragma once
+
+#include <urh/types.h>
+
+using RainGuiAutoHookBackend = UrhAutoHookBackend;
+using RainGuiAutoHookBackendMask = UrhAutoHookBackendMask;
+using RainGuiAutoHookRuntime = UrhAutoHookRuntime;
+using RainGuiAutoHookDiagnostics = UrhAutoHookDiagnostics;
+using RainGuiAutoHookDesc = UrhAutoHookDesc;
+using RainGuiAutoHookSetupCallback = UrhAutoHookSetupCallback;
+using RainGuiAutoHookRenderCallback = UrhAutoHookRenderCallback;
+using RainGuiAutoHookVisibleCallback = UrhAutoHookVisibleCallback;
+using RainGuiAutoHookShutdownCallback = UrhAutoHookShutdownCallback;
+
+inline constexpr RainGuiAutoHookBackend RainGuiAutoHookBackend_Unknown = UrhAutoHookBackend_Unknown;
+inline constexpr RainGuiAutoHookBackend RainGuiAutoHookBackend_Dx11 = UrhAutoHookBackend_Dx11;
+inline constexpr RainGuiAutoHookBackend RainGuiAutoHookBackend_Dx12 = UrhAutoHookBackend_Dx12;
+inline constexpr RainGuiAutoHookBackend RainGuiAutoHookBackend_Vulkan = UrhAutoHookBackend_Vulkan;
+
+inline constexpr RainGuiAutoHookBackendMask RainGuiAutoHookBackendMask_None = UrhAutoHookBackendMask_None;
+inline constexpr RainGuiAutoHookBackendMask RainGuiAutoHookBackendMask_Dx11 = UrhAutoHookBackendMask_Dx11;
+inline constexpr RainGuiAutoHookBackendMask RainGuiAutoHookBackendMask_Dx12 = UrhAutoHookBackendMask_Dx12;
+inline constexpr RainGuiAutoHookBackendMask RainGuiAutoHookBackendMask_Vulkan = UrhAutoHookBackendMask_Vulkan;
+inline constexpr RainGuiAutoHookBackendMask RainGuiAutoHookBackendMask_All = UrhAutoHookBackendMask_All;

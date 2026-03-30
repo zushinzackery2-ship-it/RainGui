@@ -3,6 +3,10 @@ call "D:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\VsDe
 
 cd /d "%~dp0"
 
+set "SCRIPT_DIR=%~dp0"
+if "%URH_ROOT%"=="" set "URH_ROOT=%SCRIPT_DIR%..\..\Universal-Render-Hook\URH"
+set "URH_INCLUDE=%URH_ROOT%\include"
+
 set OBJ_DIR=obj
 set BIN_DIR=bin
 
@@ -11,7 +15,7 @@ mkdir "%OBJ_DIR%"
 if not exist "%BIN_DIR%" mkdir "%BIN_DIR%"
 
 echo [1/2] Compiling RainGuiDx12HookTest...
-cl /nologo /c /std:c++17 /EHsc /O2 /MT /W3 /I"." /I"..\RainGui" /Fo"%OBJ_DIR%\\" ^
+cl /nologo /c /std:c++17 /EHsc /O2 /MT /W3 /I"." /I"..\RainGui" /I"%URH_INCLUDE%" /Fo"%OBJ_DIR%\\" ^
     raingui_dx12hook_test.cpp
 if errorlevel 1 goto :error
 

@@ -1,13 +1,5 @@
 #pragma once
 
-#include "raingui_dx11hook_types.h"
+#include <urh/dx11_hook.h>
 
-namespace RainGuiDx11Hook
-{
-    void FillDefaultDesc(RainGuiDx11HookDesc* desc);
-    bool Init(const RainGuiDx11HookDesc* desc);
-    void Shutdown();
-    bool IsInstalled();
-    bool IsReady();
-    const RainGuiDx11HookRuntime* GetRuntime();
-}
+namespace RainGuiDx11Hook = UrhDx11Hook;

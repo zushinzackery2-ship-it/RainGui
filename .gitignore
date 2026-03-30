@@ -1,20 +1,31 @@
 .vs/
+.vscode/
+.idea/
 *.suo
 *.user
 *.VC.db
 *.VC.opendb
+*.userosscache
+*.sln.docstates
 
 *.obj
 *.ilk
 *.pdb
 *.idb
 *.ipch
+*.iobj
+*.ipdb
+*.pch
 *.tlog
 *.lastbuildstate
 
 *.dll
 *.lib
 *.exp
+*.log
+*.tmp
+*.bak
+*.dmp
 
 RainGui/bin/
 RainGui/obj/

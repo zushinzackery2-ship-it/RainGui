@@ -18,6 +18,15 @@ namespace
 {
     constexpr ULONGLONG kCommOfflineTimeoutMs = 1500;
 
+    DWORD MakeColor(BYTE red, BYTE green, BYTE blue, BYTE alpha)
+    {
+        return
+            (static_cast<DWORD>(alpha) << 24) |
+            (static_cast<DWORD>(blue) << 16) |
+            (static_cast<DWORD>(green) << 8) |
+            static_cast<DWORD>(red);
+    }
+
     void ResetOfflineState()
     {
         if (!s_commData)
@@ -151,6 +160,15 @@ bool RainGui_Comm_Init()
         s_commData->config.drawNames = 0;
         s_commData->config.drawCollision = 0;
         s_commData->config.actorFilterEnabled = 1;
+        s_commData->config.drawActorText = 1;
+        s_commData->config.drawActorBoxes = 0;
+        s_commData->config.drawActorPoints = 1;
+        s_commData->config.excludeViewTarget = 1;
+        s_commData->config.maxDistanceMeters = 0.0f;
+        s_commData->config.maxActors = 512;
+        s_commData->config.textColor = MakeColor(255, 242, 89, 255);
+        s_commData->config.boxColor = MakeColor(64, 217, 115, 255);
+        s_commData->config.pointColor = MakeColor(255, 64, 64, 255);
         s_commData->config.aimbotEnabled = 0;
         s_commData->config.drawFOV = 1;
         s_commData->config.fovRadius = 100.0f;
@@ -191,6 +209,11 @@ void RainGui_Comm_Shutdown()
 }
 
 const RainGuiCommData* RainGui_Comm_GetData()
+{
+    return s_commData;
+}
+
+RainGuiCommData* RainGui_Comm_GetWritableData()
 {
     return s_commData;
 }

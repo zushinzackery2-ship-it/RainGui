@@ -6,8 +6,10 @@
 #include "raingui_impl_dx10.h"
 #include "raingui_impl_dx11.h"
 #include "raingui_impl_dx12.h"
+#include "raingui_autohook_types.h"
 #include "raingui_dx11hook_types.h"
 #include "raingui_dx12hook_types.h"
+#include "raingui_vulkanhook_types.h"
 
 #undef RAINGUI_API
 #ifdef RAINGUI_BUILD_DLL
@@ -92,6 +94,19 @@ RAINGUI_API void RainGui_DX11Hook_Shutdown();
 RAINGUI_API bool RainGui_DX11Hook_IsInstalled();
 RAINGUI_API bool RainGui_DX11Hook_IsReady();
 RAINGUI_API const RainGuiDx11HookRuntime* RainGui_DX11Hook_GetRuntime();
+RAINGUI_API void RainGui_AutoHook_FillDefaultDesc(RainGuiAutoHookDesc* desc);
+RAINGUI_API bool RainGui_AutoHook_Init(const RainGuiAutoHookDesc* desc);
+RAINGUI_API void RainGui_AutoHook_Shutdown();
+RAINGUI_API bool RainGui_AutoHook_IsInstalled();
+RAINGUI_API bool RainGui_AutoHook_IsReady();
+RAINGUI_API const RainGuiAutoHookRuntime* RainGui_AutoHook_GetRuntime();
+RAINGUI_API void RainGui_AutoHook_GetDiagnostics(RainGuiAutoHookDiagnostics* diagnostics);
+RAINGUI_API void RainGui_VulkanHook_FillDefaultDesc(RainGuiVulkanHookDesc* desc);
+RAINGUI_API bool RainGui_VulkanHook_Init(const RainGuiVulkanHookDesc* desc);
+RAINGUI_API void RainGui_VulkanHook_Shutdown();
+RAINGUI_API bool RainGui_VulkanHook_IsInstalled();
+RAINGUI_API bool RainGui_VulkanHook_IsReady();
+RAINGUI_API const RainGuiVulkanHookRuntime* RainGui_VulkanHook_GetRuntime();
 
 RAINGUI_API bool RainGui_DX12_Init(ID3D12Device* device, int numFramesInFlight, DXGI_FORMAT rtvFormat, ID3D12DescriptorHeap* cbvSrvHeap,
     D3D12_CPU_DESCRIPTOR_HANDLE fontSrvCpuDescHandle, D3D12_GPU_DESCRIPTOR_HANDLE fontSrvGpuDescHandle);

@@ -10,18 +10,14 @@ RainGui 核心库目录。
 - 默认禁用 Demo 和 Metrics 窗口
 - `ImDrawVert` 已改为非官方默认布局
 - DX9 / DX10 / DX11 / DX12 backend 已同步 RainGui 品牌名
-- 新增模块化 `DX11Hook`
+- `DX11 / DX12 / AutoHook` 实现已下沉到 `Universal-Render-Hook`
+- `VulkanHook` 实现已下沉到独立 `VulkanHook`
 - 保留 NVIDIA Overlay 后端
 - 保留共享内存通信模块
-- 新增模块化 `DX12Hook`
 - 新增统一默认外观入口 `RainGui_ApplyOverlayDefaults()`
 
 ## 目录内重要文件
 
-- `DX11Hook/`
-  - DX11Hook 内部实现
-- `DX12Hook/`
-  - DX12Hook 内部实现
 - `raingui.*`
   - 核心源码
 - `raingui_impl_win32.*`
@@ -35,13 +31,21 @@ RainGui 核心库目录。
 - `raingui_defaults.*`
   - 默认 overlay 外观
 - `raingui_dx11hook_types.h`
-  - DX11Hook 对外结构
+  - DX11Hook 对外结构转发层
 - `raingui_dx12hook_types.h`
-  - DX12Hook 对外结构
+  - DX12Hook 对外结构转发层
 - `raingui_impl_dx11hook.h`
-  - DX11Hook 对外 C++ 接口
+  - DX11Hook 对外 C++ 接口转发层
 - `raingui_impl_dx12hook.h`
-  - DX12Hook 对外 C++ 接口
+  - DX12Hook 对外 C++ 接口转发层
+- `raingui_autohook_types.h`
+  - AutoHook 对外结构转发层
+- `raingui_impl_autohook.h`
+  - AutoHook 对外 C++ 接口转发层
+- `raingui_vulkanhook_types.h`
+  - VulkanHook 对外结构转发层
+- `raingui_impl_vulkanhook.h`
+  - VulkanHook 对外 C++ 接口转发层
 - `raingui_exports.*`
   - DLL 导出层
 
@@ -151,7 +155,20 @@ void InstallHook()
 .\build.bat
 ```
 
-`build.bat` 会同时编译 DX11Hook / DX12Hook 实现，并产出统一的 `RainGui.dll`。
+`build.bat` 会编译 `RainGui` 核心层，并联编 `Universal-Render-Hook` / `VulkanHook` 的实现，产出统一的 `RainGui.dll`。
+
+默认依赖根目录：
+
+- `..\..\Universal-Render-Hook\URH`
+- `..\..\VulkanHook\VulkanHook`
+
+也可以通过环境变量覆盖：
+
+```powershell
+$env:URH_ROOT = 'F:\Deps\Universal-Render-Hook\URH'
+$env:VKH_ROOT = 'F:\Deps\VulkanHook\VulkanHook'
+.\build.bat
+```
 
 构建成功后生成：
 
@@ -174,3 +191,9 @@ bin\RainGui.exp
 - 自动安装对应的 Hook
 - 成功后显示调试窗口
 - 只用于验证 hook 是否正常
+
+## 命名兼容
+
+- `Universal-Render-Hook` 原生类型以 `Urh*` 为规范名
+- `VulkanHook` 原生类型以 `Vkh*` 为规范名
+- `RainGuiDx11HookDesc / RainGuiDx12HookDesc / RainGuiAutoHookDesc / RainGuiVulkanHookDesc` 只在 `RainGui` 转发头里提供

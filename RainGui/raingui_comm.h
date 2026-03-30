@@ -82,6 +82,17 @@ struct RainGuiConfig
     BYTE drawCollision;             // 绘制碰撞体
     BYTE actorFilterEnabled;        // 是否启用 Actor 类名过滤
 
+    // Actor Overlay 配置
+    BYTE drawActorText;             // 绘制 Actor 文字
+    BYTE drawActorBoxes;            // 绘制 Actor 方框
+    BYTE drawActorPoints;           // 绘制 Actor 点位
+    BYTE excludeViewTarget;         // 排除当前视角 Actor
+    float maxDistanceMeters;        // 最大绘制距离（0=不限）
+    DWORD maxActors;                // 最大绘制 Actor 数量
+    DWORD textColor;                // 文本颜色（RainGui ImU32）
+    DWORD boxColor;                 // 方框颜色（RainGui ImU32）
+    DWORD pointColor;               // 点位颜色（RainGui ImU32）
+
     // Aimbot 配置
     BYTE aimbotEnabled;             // Aimbot 总开关
     BYTE drawFOV;                   // 显示 FOV 圆圈
@@ -120,7 +131,7 @@ struct RainGuiCommData
 
 #define RAINGUI_MAX_COMMANDS 32768
 #define RAINGUI_COMM_MAGIC   0x52474349
-#define RAINGUI_COMM_VERSION 3
+#define RAINGUI_COMM_VERSION 4
 #define RAINGUI_COMM_NAME    "Global\\RainGuiComm"
 #define RAINGUI_COMM_SIZE    (sizeof(RainGuiCommData))
 
@@ -132,6 +143,9 @@ void RainGui_Comm_Shutdown();
 
 // 获取共享内存数据指针（只读，用于绘制）
 const RainGuiCommData* RainGui_Comm_GetData();
+
+// 获取共享内存数据指针（读写，用于采集端写入命令）
+RainGuiCommData* RainGui_Comm_GetWritableData();
 
 // 获取配置指针（可读写，用于 UI）
 RainGuiConfig* RainGui_Comm_GetConfig();

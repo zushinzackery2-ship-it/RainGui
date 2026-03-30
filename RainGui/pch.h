@@ -1,8 +1,11 @@
 #pragma once
 
 // Windows
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
+#endif
 #include <windows.h>
+#include <Shlwapi.h>
 #include <dwmapi.h>
 
 // D3D11
