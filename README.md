@@ -1,13 +1,24 @@
+<div align="center">
+
 # RainGui
 
-轻量级即时模式 GUI 与后端辅助封装库。
+**轻量级即时模式 GUI 与后端辅助封装库**
 
-## 定位
+*Immediate Mode UI | Win32 / D3D Backends | Forwarding API*
 
-- GUI 层，不是底层图形 Hook 核心
-- 提供 Win32 / D3D 后端接线
-- 提供默认 overlay 风格和导出封装
-- 保留 `NVIDIA Overlay` 和共享内存通信相关模块
+![C++](https://img.shields.io/badge/C%2B%2B-17-blue?style=flat-square)
+![Platform](https://img.shields.io/badge/Platform-Windows%20x64-lightgrey?style=flat-square)
+![UI](https://img.shields.io/badge/UI-Immediate%20Mode-green?style=flat-square)
+![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)
+
+</div>
+
+---
+
+> [!NOTE]
+> **仓库边界**  
+> `RainGui` 是 GUI 层，不再承载底层图形 Hook 核心。  
+> `DX11 / DX12 / AutoHook` 已下沉到 `Universal-Render-Hook`，`Vulkan` 已下沉到 `VulkanHook`。
 
 ## 目录
 
@@ -18,25 +29,17 @@ RainGui/
 └── RainGuiDx12HookTest/     DX12 测试工程
 ```
 
-`RainGui/` 目录主要包含：
-
-- `raingui.*`
-- `raingui_impl_win32.*`
-- `raingui_impl_dx9/10/11/12.*`
-- `raingui_defaults.*`
-- `raingui_impl_nvidia.*`
-- `raingui_comm.*`
-- `raingui_exports.*`
-
 ## 依赖关系
 
-- `RainGui` 现在不再承载 DX11 / DX12 / Vulkan Hook 核心实现
-- Hook/runtime 探测已经下沉到 `Universal-Render-Hook` 和 `VulkanHook`
-- 上层业务可以同时依赖它们，但不该再把 `RainGui` 当底层 Hook 库
+| 方向 | 说明 |
+|:-----|:-----|
+| `RainGui -> Universal-Render-Hook` | DX11 / DX12 / AutoHook 转发层 |
+| `RainGui -> VulkanHook` | Vulkan 转发层 |
+| `RainGui <- InterRec` | 可选上层业务使用方 |
 
-## 当前构建依赖
+## 构建
 
-如果要构建 `RainGui.dll` 的统一导出版本，默认会按当前同级目录查找：
+统一导出版 `RainGui.dll` 默认按兄弟目录查找依赖：
 
 - `../Universal-Render-Hook/URH`
 - `../VulkanHook/VulkanHook`
@@ -49,14 +52,12 @@ $env:VKH_ROOT = 'F:\Deps\VulkanHook\VulkanHook'
 .\RainGui\build.bat
 ```
 
-底层原生类型已经改为 `Urh* / Vkh*` 作为规范名。
-`RainGui*` 命名只保留在 `RainGui` 自己的转发头和导出层里。
+## 命名策略
 
-## 使用方式
-
-当前更推荐源码级接入，按需把需要的 `.cpp/.h` 编进业务工程。
+- 底层原生类型用 `Urh* / Vkh*`
+- `RainGui*` 命名只保留在本仓的转发头和导出层
+- 上层如果只需要 UI，可以不直接接触底层命名
 
 ## 许可
 
-MIT，见根目录 `LICENSE`。  
-本仓库基于 Dear ImGui 整理维护，公开发布时建议保留上游许可证注释。
+MIT，见根目录 `LICENSE`

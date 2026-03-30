@@ -3,10 +3,19 @@
 .idea/
 *.suo
 *.user
-*.VC.db
-*.VC.opendb
 *.userosscache
 *.sln.docstates
+
+bin/
+obj/
+**/bin/
+**/obj/
+**/bin_tmp/
+**/obj_tmp/
+Debug/
+Release/
+x64/
+x86/
 
 *.obj
 *.ilk
@@ -18,21 +27,13 @@
 *.pch
 *.tlog
 *.lastbuildstate
-
 *.dll
 *.lib
 *.exp
+
 *.log
 *.tmp
 *.bak
 *.dmp
 
-RainGui/bin/
-RainGui/obj/
-RainGui/bin_tmp/
-RainGui/obj_tmp/
-RainGuiDx11HookTest/bin/
-RainGuiDx11HookTest/obj/
-RainGuiDx12HookTest/bin/
-RainGuiDx12HookTest/obj/
 README原版参考.md
