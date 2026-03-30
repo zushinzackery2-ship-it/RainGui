@@ -55,17 +55,12 @@ cl /nologo /c /std:c++17 /EHsc /O2 /MT /W3 /DRAINGUI_BUILD_DLL /I"." /I"%URH_INC
     "%URH_SRC%\urh_dx12_hooks_present.cpp" ^
     "%URH_SRC%\urh_dx12_hooks_aux.cpp" ^
     "%VKH_SRC%\vkh_bootstrap.cpp" ^
-    "%VKH_SRC%\vkh_dispatch.cpp" ^
-    "%VKH_SRC%\vkh_imports.cpp" ^
-    "%VKH_SRC%\vkh_hooks.cpp" ^
     "%VKH_SRC%\vkh_layer_state.cpp" ^
     "%VKH_SRC%\vkh_layer_instance.cpp" ^
     "%VKH_SRC%\vkh_layer_runtime.cpp" ^
     "%VKH_SRC%\vkh_layer_exports.cpp" ^
-    "%VKH_SRC%\vkh_loader.cpp" ^
     "%VKH_SRC%\vkh_runtime_probe.cpp" ^
     "%VKH_SRC%\vkh_tracking.cpp" ^
-    "%VKH_SRC%\vkh_proc.cpp" ^
     raingui_impl_win32.cpp ^
     raingui_impl_dx11.cpp
 if errorlevel 1 goto :error
