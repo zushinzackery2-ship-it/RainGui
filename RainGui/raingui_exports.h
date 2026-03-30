@@ -118,7 +118,6 @@ RAINGUI_API void RainGui_DX12_InvalidateDeviceObjects();
 
 RAINGUI_API void RainGui_DX12Hook_FillDefaultDesc(RainGuiDx12HookDesc* desc);
 RAINGUI_API bool RainGui_DX12Hook_Init(const RainGuiDx12HookDesc* desc);
-RAINGUI_API bool RainGui_DX12Hook_InitDefaultTest();
 RAINGUI_API void RainGui_DX12Hook_Shutdown();
 RAINGUI_API bool RainGui_DX12Hook_IsInstalled();
 RAINGUI_API bool RainGui_DX12Hook_IsReady();

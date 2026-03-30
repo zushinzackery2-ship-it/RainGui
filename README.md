@@ -18,7 +18,8 @@
 > [!NOTE]
 > **仓库边界**  
 > `RainGui` 是 GUI 层，不再承载底层图形 Hook 核心。  
-> `DX11 / DX12 / AutoHook` 已下沉到 `Universal-Render-Hook`，`Vulkan` 已下沉到 `VulkanHook`。
+> `DX11 / DX12 / AutoHook` 已下沉到 `Universal-Render-Hook`，`Vulkan` 已下沉到 `VulkanHook`。  
+> `RainGui_*Hook_*` 导出仍然保留，但实现是桥接转发，不再在本仓库内重复维护一份 Hook 核心。
 
 > [!IMPORTANT]
 > **ImGui 集成说明**  
@@ -204,8 +205,6 @@ RainGui/
 │   ├── imstb_textedit.h         # stb 文本编辑
 │   └── imstb_truetype.h         # stb TrueType 解析
 │
-├── RainGuiDx11HookTest/         # DX11 Hook 测试工程
-└── RainGuiDx12HookTest/         # DX12 Hook 测试工程
 ```
 
 ---
@@ -297,20 +296,13 @@ InterRec (可选上层)
 
 ---
 
-## 构建
+## 集成
 
-统一导出版 `RainGui.dll` 默认按兄弟目录查找依赖：
+`RainGui` 目前按源码库使用，不再跟踪仓库内测试载荷和本地构建脚本。
 
-- `../Universal-Render-Hook/URH`
-- `../VulkanHook/VulkanHook`
-
-也可以通过环境变量覆盖：
-
-```powershell
-$env:URH_ROOT = 'F:\Deps\Universal-Render-Hook\URH'
-$env:VKH_ROOT = 'F:\Deps\VulkanHook\VulkanHook'
-.\RainGui\build.bat
-```
+- 将 `RainGui/` 目录加入你的工程或作为子模块引用
+- 如果使用 Hook 转发头，额外加入 `Universal-Render-Hook/URH/include` 与 `VulkanHook/VulkanHook/include`
+- 如需导出统一 DLL，请在你自己的工程里编译 `RainGui/*.cpp` 并按需链接 `URH` / `VulkanHook`
 
 ---
 

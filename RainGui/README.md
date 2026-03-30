@@ -15,6 +15,7 @@ RainGui 核心库目录。
 - 保留 NVIDIA Overlay 后端
 - 保留共享内存通信模块
 - 新增统一默认外观入口 `RainGui_ApplyOverlayDefaults()`
+- `RainGui_DX11Hook_* / RainGui_DX12Hook_* / RainGui_AutoHook_* / RainGui_VulkanHook_*` 继续作为桥接导出保留
 
 ## 目录内重要文件
 
@@ -149,48 +150,13 @@ void InstallHook()
 }
 ```
 
-## 构建
+## 集成
 
-```powershell
-.\build.bat
-```
+`RainGui` 当前作为源码层分发，不再在仓库里跟踪本地 `build.bat`、验证载荷或其它一次性测试脚本。
 
-`build.bat` 会编译 `RainGui` 核心层，并联编 `Universal-Render-Hook` / `VulkanHook` 的实现，产出统一的 `RainGui.dll`。
-
-默认依赖根目录：
-
-- `..\..\Universal-Render-Hook\URH`
-- `..\..\VulkanHook\VulkanHook`
-
-也可以通过环境变量覆盖：
-
-```powershell
-$env:URH_ROOT = 'F:\Deps\Universal-Render-Hook\URH'
-$env:VKH_ROOT = 'F:\Deps\VulkanHook\VulkanHook'
-.\build.bat
-```
-
-构建成功后生成：
-
-```text
-bin\RainGui.dll
-bin\RainGui.lib
-bin\RainGui.exp
-```
-
-## 测试载荷
-
-根目录里同时提供两个独立测试 DLL：
-
-- `RainGuiDx11HookTest/`
-- `RainGuiDx12HookTest/`
-
-共同特征：
-
-- 注入后自动加载 `RainGui.dll`
-- 自动安装对应的 Hook
-- 成功后显示调试窗口
-- 只用于验证 hook 是否正常
+- 直接将本目录源码加入你的工程
+- 如果使用 Hook 桥接头，同时加入 `Universal-Render-Hook/URH/include` 与 `VulkanHook/VulkanHook/include`
+- 统一 DLL、打包和验证工程由上层使用方自行维护
 
 ## 命名兼容
 

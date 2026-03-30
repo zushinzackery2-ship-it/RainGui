@@ -37,3 +37,6 @@ x86/
 *.dmp
 
 README原版参考.md
+*.bat
+RainGuiDx11HookTest/
+RainGuiDx12HookTest/
