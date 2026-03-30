@@ -17,195 +17,144 @@
 
 > [!NOTE]
 > **仓库边界**  
-> `RainGui` 是 GUI 层，不再承载底层图形 Hook 核心。  
-> `DX11 / DX12 / AutoHook` 已下沉到 `Universal-Render-Hook`，`Vulkan` 已下沉到 `VulkanHook`。  
-> `RainGui_*Hook_*` 导出仍然保留，但实现是桥接转发，不再在本仓库内重复维护一份 Hook 核心。
+> `RainGui` 负责 GUI 核心、Win32 / DX9 / DX10 / DX11 / DX12 backend、可选 NVIDIA helper，以及导出层。  
+> `DX11 / DX12 / AutoHook` 的 Hook 核心已经下沉到 `Universal-Render-Hook`，`Vulkan` 的底层跟踪与 Layer 接入已经下沉到 `VulkanHook`。
 
 > [!IMPORTANT]
-> **ImGui 集成说明**  
-> 本库内嵌完整 Dear ImGui 源码（`raingui.cpp` / `raingui.h` / `raingui_internal.h`），提供开箱即用的 UI 能力。  
-> 多个图形后端实现（DX9 / DX10 / DX11 / DX12）可根据目标环境选择。
-
----
+> **Hook 转发层说明**  
+> `raingui_impl_autohook.h`、`raingui_impl_dx11hook.h`、`raingui_impl_dx12hook.h`、`raingui_impl_vulkanhook.h` 以及对应的 `*_types.h` 现在只是桥接头。  
+> `RainGui_*Hook_*` 导出仍然保留，但实现只是转发到 `URH` / `VKH`，本仓库内不再重复维护一份 Hook 核心。
 
 ## 特性
 
 | 功能 | 说明 |
 |:-----|:-----|
-| **Immediate Mode UI** | 基于 Dear ImGui，每帧重建 UI 状态，无需维护控件树，代码即界面 |
-| **DX9 后端** | `raingui_impl_dx9.cpp`：使用 `IDirect3DDevice9` 创建顶点缓冲和纹理，支持固定管线渲染 |
-| **DX10 后端** | `raingui_impl_dx10.cpp`：使用 `ID3D10Device` 创建着色器和常量缓冲，支持可编程管线 |
-| **DX11 后端** | `raingui_impl_dx11.cpp`：使用 `ID3D11Device` / `ID3D11DeviceContext`，支持多线程渲染 |
-| **DX12 后端** | `raingui_impl_dx12.cpp`：使用 `ID3D12Device` / `ID3D12GraphicsCommandList`，管理 Descriptor Heap 和 Root Signature |
-| **Win32 后端** | `raingui_impl_win32.cpp`：处理 `WndProc` 消息，转换鼠标 / 键盘输入到 ImGui |
-| **Hook 转发层** | `raingui_impl_autohook.h` / `raingui_impl_dx11hook.h` / `raingui_impl_dx12hook.h` / `raingui_impl_vulkanhook.h`：将 `Universal-Render-Hook` / `VulkanHook` 的回调桥接到 ImGui 后端 |
-| **NVIDIA 扩展** | `raingui_impl_nvidia.cpp`：可选 NVIDIA Overlay 支持 |
-| **DLL 导出** | `raingui_exports.cpp`：统一导出 `RainGui_*` 系列 C API，便于跨模块调用 |
-| **通信层** | `raingui_comm.cpp`：可选的进程间通信辅助（与控制器交互） |
+| **Immediate Mode UI** | 基于 Dear ImGui，每帧重建 UI 状态，无需维护控件树 |
+| **DX9 后端** | `raingui_impl_dx9.cpp`：固定管线渲染 backend |
+| **DX10 后端** | `raingui_impl_dx10.cpp`：DX10 programmable pipeline backend |
+| **DX11 后端** | `raingui_impl_dx11.cpp`：基于 `ID3D11Device` / `ID3D11DeviceContext` 的渲染 backend |
+| **DX12 后端** | `raingui_impl_dx12.cpp`：基于 `ID3D12Device` / `ID3D12GraphicsCommandList` 的渲染 backend |
+| **Win32 后端** | `raingui_impl_win32.cpp`：处理窗口消息、鼠标和键盘输入 |
+| **NVIDIA 扩展** | `raingui_impl_nvidia.cpp`：可选 NVIDIA Overlay helper |
+| **Hook 转发层** | `raingui_impl_*hook.h` / `raingui_*hook_types.h`：把 `URH` / `VKH` 的 C++ 接口和类型转发给 `RainGui` 使用者 |
+| **DLL 导出** | `raingui_exports.cpp`：统一导出 `RainGui_*` C API |
+| **通信层** | `raingui_comm.cpp`：可选共享内存通信辅助 |
 
 ---
 
 ## 后端架构
 
-```
+```text
 应用程序 / DLL
-  RainGui_Init() / RainGui_NewFrame() / RainGui_Render()
+  RainGui::CreateContext()
+  RainGui_ImplWin32_Init()
+  RainGui_ImplDX11_Init() / RainGui_ImplDX12_Init()
     |
     v
 RainGui Core
-  +-- raingui.cpp (ImGui Core)
-  +-- raingui_draw.cpp (Draw Lists)
-  +-- raingui_widgets.cpp (UI Widgets)
+  +-- raingui.cpp          (ImGui Core)
+  +-- raingui_draw.cpp     (Draw Lists)
+  +-- raingui_widgets.cpp  (UI Widgets)
+  +-- raingui_tables.cpp   (Tables)
     |
     +-------------+-------------+
     |             |             |
     v             v             v
-raingui_impl_   raingui_impl_   raingui_impl_
-  dx11.cpp        dx12.cpp        win32.cpp
-  (渲染后端)       (渲染后端)       (输入后端)
-    |             |
-    +-------------+
-          |
-          v
-Hook 转发层
-  raingui_impl_autohook.h → Universal-Render-Hook (URH)
-  raingui_impl_vulkanhook.h → VulkanHook (VHK)
+Win32 Backend   DX11 Backend   DX12 Backend
+    |             |             |
+    +-------------+-------------+
+                  |
+                  v
+         Hook 转发层 / 导出层
+      +-- raingui_impl_autohook.h
+      +-- raingui_impl_dx11hook.h
+      +-- raingui_impl_dx12hook.h
+      +-- raingui_impl_vulkanhook.h
+      +-- raingui_exports.cpp
 ```
 
 ---
 
 ## ImGui 渲染流程
 
-```
+```text
 帧开始
     │
-    ├─ RainGui_NewFrame()
-    │   ├─ ImGui_ImplWin32_NewFrame()    # 更新输入状态
-    │   └─ ImGui::NewFrame()             # 开始新帧
+    ├─ RainGui_ImplWin32_NewFrame()
+    ├─ RainGui_ImplDX11_NewFrame() / RainGui_ImplDX12_NewFrame()
+    ├─ RainGui::NewFrame()
     │
     ├─ 用户代码
-    │   ├─ ImGui::Begin("窗口")
-    │   ├─ ImGui::Text("文本")
-    │   ├─ ImGui::Button("按钮")
-    │   └─ ImGui::End()
+    │   ├─ RainGui::Begin(...)
+    │   ├─ RainGui::Text(...)
+    │   ├─ RainGui::Button(...)
+    │   └─ RainGui::End()
     │
-    └─ RainGui_Render()
-        ├─ ImGui::Render()               # 生成 DrawList
-        └─ ImGui_ImplDX11_RenderDrawData()  # 提交 GPU 命令
-            │
-            ├─ 更新顶点 / 索引缓冲
-            ├─ 设置视口 / 裁剪矩形
-            ├─ 绑定着色器 / 纹理
-            └─ DrawIndexed()
+    └─ RainGui::Render()
+        └─ RainGui_ImplDX11_RenderDrawData() / RainGui_ImplDX12_RenderDrawData()
 ```
 
 ---
 
 ## DX11 后端原理
 
-```cpp
-// 初始化：创建着色器和资源
-ImGui_ImplDX11_Init(device, deviceContext);
-    │
-    ├─ 编译顶点着色器 (vs_4_0)
-    ├─ 编译像素着色器 (ps_4_0)
-    ├─ 创建输入布局 (POSITION / TEXCOORD / COLOR)
-    ├─ 创建常量缓冲 (投影矩阵)
-    ├─ 创建混合状态 (Alpha Blending)
-    ├─ 创建光栅化状态 (裁剪 + 无背面剔除)
-    ├─ 创建深度模板状态 (禁用深度测试)
-    └─ 创建采样器状态 (线性过滤)
+```text
+初始化
+  RainGui_ImplDX11_Init(device, deviceContext)
+    ├─ 编译顶点 / 像素着色器
+    ├─ 创建输入布局
+    ├─ 创建常量缓冲
+    ├─ 创建 Blend / Rasterizer / DepthStencil 状态
+    └─ 创建字体纹理和采样器
 
-// 每帧渲染
-ImGui_ImplDX11_RenderDrawData(drawData);
-    │
-    ├─ 更新 / 创建顶点缓冲 (ImDrawVert[])
-    ├─ 更新 / 创建索引缓冲 (ImDrawIdx[])
-    ├─ 设置投影矩阵 (正交投影)
+每帧渲染
+  RainGui_ImplDX11_RenderDrawData(drawData)
+    ├─ 更新顶点 / 索引缓冲
+    ├─ 设置正交投影
     ├─ 保存当前渲染状态
-    ├─ 设置 ImGui 渲染状态
-    ├─ 遍历 DrawList
-    │   ├─ 设置裁剪矩形
-    │   ├─ 绑定纹理
-    │   └─ DrawIndexed()
-    └─ 恢复渲染状态
+    ├─ 绑定 ImGui 所需状态
+    ├─ 遍历 DrawList 并 DrawIndexed()
+    └─ 恢复调用方状态
 ```
-
----
 
 ## DX12 后端原理
 
-```cpp
-// 初始化
-ImGui_ImplDX12_Init(device, numFramesInFlight, rtvFormat, srvDescriptorHeap, ...);
-    │
-    ├─ 创建 Root Signature (1 个 Descriptor Table + 1 个常量)
-    ├─ 编译顶点 / 像素着色器
-    ├─ 创建 Pipeline State Object (PSO)
-    └─ 为字体纹理分配 SRV Descriptor
+```text
+初始化
+  RainGui_ImplDX12_Init(device, numFramesInFlight, rtvFormat, srvHeap, ...)
+    ├─ 创建 Root Signature
+    ├─ 创建 Pipeline State Object
+    ├─ 分配字体 SRV
+    └─ 初始化每帧资源
 
-// 每帧渲染
-ImGui_ImplDX12_RenderDrawData(drawData, commandList);
-    │
-    ├─ 更新 / 创建顶点缓冲 (Upload Heap)
-    ├─ 更新 / 创建索引缓冲 (Upload Heap)
-    ├─ 设置 Root Signature / PSO
-    ├─ 设置 Descriptor Heap
-    ├─ 设置视口 / 投影矩阵
-    ├─ 设置顶点 / 索引缓冲视图
-    ├─ 遍历 DrawList
-    │   ├─ 设置裁剪矩形
-    │   ├─ 设置纹理 Descriptor
-    │   └─ DrawIndexedInstanced()
-    └─ (由调用方提交 CommandList)
+每帧渲染
+  RainGui_ImplDX12_RenderDrawData(drawData, commandList)
+    ├─ 更新 Upload Heap 中的顶点 / 索引数据
+    ├─ 绑定 Root Signature / PSO / Descriptor Heap
+    ├─ 设置视口和正交投影
+    └─ 遍历 DrawList 并 DrawIndexedInstanced()
 ```
 
 ---
 
-## 目录结构
+## Hook 转发层现状
 
-```
-RainGui/
-├── RainGui/
-│   ├── raingui.cpp              # Dear ImGui 核心（内嵌）
-│   ├── raingui.h                # 公开头
-│   ├── raingui_internal.h       # 内部结构
-│   ├── raingui_draw.cpp         # DrawList 渲染
-│   ├── raingui_widgets.cpp      # UI 控件实现
-│   ├── raingui_tables.cpp       # 表格控件
-│   ├── raingui_demo.cpp         # Demo 窗口
-│   │
-│   ├── raingui_impl_win32.cpp   # Win32 输入后端
-│   ├── raingui_impl_win32.h
-│   ├── raingui_impl_dx9.cpp     # DX9 渲染后端
-│   ├── raingui_impl_dx9.h
-│   ├── raingui_impl_dx10.cpp    # DX10 渲染后端
-│   ├── raingui_impl_dx10.h
-│   ├── raingui_impl_dx11.cpp    # DX11 渲染后端
-│   ├── raingui_impl_dx11.h
-│   ├── raingui_impl_dx12.cpp    # DX12 渲染后端
-│   ├── raingui_impl_dx12.h
-│   │
-│   ├── raingui_impl_autohook.h  # URH AutoHook 转发
-│   ├── raingui_impl_dx11hook.h  # URH DX11 Hook 转发
-│   ├── raingui_impl_dx12hook.h  # URH DX12 Hook 转发
-│   ├── raingui_impl_vulkanhook.h # VHK Vulkan Hook 转发
-│   │
-│   ├── raingui_impl_nvidia.cpp  # NVIDIA Overlay 支持
-│   ├── raingui_impl_nvidia.h
-│   │
-│   ├── raingui_exports.cpp      # DLL 导出入口
-│   ├── raingui_exports.h
-│   ├── raingui_comm.cpp         # 进程间通信
-│   ├── raingui_comm.h
-│   ├── raingui_defaults.cpp     # 默认配置
-│   │
-│   ├── imconfig.h               # ImGui 编译配置
-│   ├── imstb_rectpack.h         # stb 字体打包
-│   ├── imstb_textedit.h         # stb 文本编辑
-│   └── imstb_truetype.h         # stb TrueType 解析
-│
-```
+| 文件 | 当前职责 |
+|:-----|:---------|
+| `raingui_impl_autohook.h` | `UrhAutoHook` 命名空间转发 |
+| `raingui_impl_dx11hook.h` | `UrhDx11Hook` 命名空间转发 |
+| `raingui_impl_dx12hook.h` | `UrhDx12Hook` 命名空间转发 |
+| `raingui_impl_vulkanhook.h` | `VkhHook` 命名空间转发 |
+| `raingui_dx11hook_types.h` | `UrhDx11HookRuntime / Desc` 类型别名 |
+| `raingui_dx12hook_types.h` | `UrhDx12HookRuntime / Desc` 类型别名 |
+| `raingui_autohook_types.h` | `UrhAutoHookRuntime / Desc` 类型别名 |
+| `raingui_vulkanhook_types.h` | `VkhHookRuntime / Desc` 类型别名 |
+
+需要注意：
+
+- 这些文件不会在 `RainGui` 仓库内部自动完成 Hook 安装逻辑。
+- `RainGui` 仓库本身不提供 Vulkan 渲染 backend；`raingui_impl_vulkanhook.h` 只负责 Vulkan Hook / Runtime API 转发。
+- 如果你在 Hook 回调里绘制 UI，仍然需要在业务代码里自己创建 `RainGui` context，并按命中的后端初始化 `Win32 + DX11` 或 `Win32 + DX12` backend。
 
 ---
 
@@ -218,91 +167,116 @@ RainGui/
 #include "raingui_impl_win32.h"
 #include "raingui_impl_dx11.h"
 
-// 初始化
-ImGui::CreateContext();
-ImGui_ImplWin32_Init(hwnd);
-ImGui_ImplDX11_Init(device, deviceContext);
+RainGui::CreateContext();
+RainGui_ImplWin32_Init(hwnd);
+RainGui_ImplDX11_Init(device, deviceContext);
 
-// 主循环
 while (running)
 {
-    ImGui_ImplDX11_NewFrame();
-    ImGui_ImplWin32_NewFrame();
-    ImGui::NewFrame();
+    RainGui_ImplDX11_NewFrame();
+    RainGui_ImplWin32_NewFrame();
+    RainGui::NewFrame();
 
-    // UI 代码
-    ImGui::Begin("Demo");
-    ImGui::Text("Hello, RainGui!");
-    ImGui::End();
+    RainGui::Begin("Demo");
+    RainGui::Text("Hello, RainGui!");
+    RainGui::End();
 
-    ImGui::Render();
-    ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+    RainGui::Render();
+    RainGui_ImplDX11_RenderDrawData(RainGui::GetDrawData());
 }
 
-// 清理
-ImGui_ImplDX11_Shutdown();
-ImGui_ImplWin32_Shutdown();
-ImGui::DestroyContext();
+RainGui_ImplDX11_Shutdown();
+RainGui_ImplWin32_Shutdown();
+RainGui::DestroyContext();
 ```
 
-### Hook 模式（配合 Universal-Render-Hook）
+### Hook 模式（DX11 示例）
 
 ```cpp
-#include "raingui_impl_autohook.h"
+#include "raingui.h"
+#include "raingui_impl_win32.h"
+#include "raingui_impl_dx11.h"
+#include "raingui_impl_dx11hook.h"
+#include "raingui_dx11hook_types.h"
 
-void OnSetup(const UrhAutoHookRuntime* runtime, void* userData)
+static void OnSetup(const RainGuiDx11HookRuntime* runtime, void* userData)
 {
-    ImGui::CreateContext();
-    // 根据 runtime->backend 初始化对应后端
+    RainGui::CreateContext();
+    RainGui_ImplWin32_Init(runtime->hwnd);
+    RainGui_ImplDX11_Init(runtime->device, runtime->deviceContext);
 }
 
-void OnRender(const UrhAutoHookRuntime* runtime, void* userData)
+static void OnRender(const RainGuiDx11HookRuntime* runtime, void* userData)
 {
-    ImGui::NewFrame();
-    // UI 代码
-    ImGui::Render();
-    // 提交渲染
+    RainGui_ImplDX11_NewFrame();
+    RainGui_ImplWin32_NewFrame();
+    RainGui::NewFrame();
+
+    RainGui::Begin("Overlay");
+    RainGui::Text("DX11 hook path");
+    RainGui::End();
+
+    RainGui::Render();
+    RainGui_ImplDX11_RenderDrawData(RainGui::GetDrawData());
 }
 
-int main()
+void Install()
 {
-    UrhAutoHookDesc desc;
-    URH::FillDefaultDesc(&desc);
+    RainGuiDx11HookDesc desc = {};
+    RainGuiDx11Hook::FillDefaultDesc(&desc);
     desc.onSetup = OnSetup;
     desc.onRender = OnRender;
-    URH::Init(&desc);
+    RainGuiDx11Hook::Init(&desc);
 }
 ```
 
+DX12 路径同理，但需要你在业务代码里提供 descriptor heap、command list 等 DX12 渲染资源。  
+Vulkan 路径若要绘制 UI，需要由上层自行提供 Vulkan renderer backend。
+
 ---
+
+## 目录结构
+
+```text
+RainGui/
+├── RainGui/
+│   ├── raingui.cpp / raingui.h / raingui_internal.h
+│   ├── raingui_draw.cpp / raingui_widgets.cpp / raingui_tables.cpp
+│   ├── raingui_impl_win32.*
+│   ├── raingui_impl_dx9.*
+│   ├── raingui_impl_dx10.*
+│   ├── raingui_impl_dx11.*
+│   ├── raingui_impl_dx12.*
+│   ├── raingui_impl_nvidia.*
+│   ├── raingui_impl_*hook.h
+│   ├── raingui_*hook_types.h
+│   ├── raingui_defaults.*
+│   ├── raingui_comm.*
+│   └── raingui_exports.*
+├── LICENSE
+└── README.md
+```
 
 ## 依赖方向
 
-```
-VulkanHook
-    ↑
-Universal-Render-Hook
-    ↑
-RainGui (本仓库)
-    ↑
-InterRec (可选上层)
+```text
+VulkanHook        Universal-Render-Hook
+      ↑                 ↑
+      └────────┬────────┘
+               ↑
+             RainGui
 ```
 
-| 方向 | 说明 |
-|:-----|:-----|
-| `RainGui -> Universal-Render-Hook` | DX11 / DX12 / AutoHook 转发层 |
-| `RainGui -> VulkanHook` | Vulkan 转发层 |
-| `RainGui <- InterRec` | 可选上层业务使用方 |
-
----
+- 纯 GUI 使用路径不需要 `URH` / `VKH`
+- 只有当你包含 `raingui_impl_*hook.h` 或调用 `RainGui_*Hook_*` 导出时，才需要把 `URH` / `VKH` 放进工程
 
 ## 集成
 
-`RainGui` 目前按源码库使用，不再跟踪仓库内测试载荷和本地构建脚本。
+当前仓库按源码层分发：
 
-- 将 `RainGui/` 目录加入你的工程或作为子模块引用
-- 如果使用 Hook 转发头，额外加入 `Universal-Render-Hook/URH/include` 与 `VulkanHook/VulkanHook/include`
-- 如需导出统一 DLL，请在你自己的工程里编译 `RainGui/*.cpp` 并按需链接 `URH` / `VulkanHook`
+- 直接把 `RainGui/` 目录源码加入你的工程
+- 如需 Hook 转发层，额外加入 `Universal-Render-Hook/URH/include` 与 `VulkanHook/VulkanHook/include`
+- 当前仓库不再跟踪本地测试载荷、一次性验证脚本或仓库内构建脚本
 
 ---
 
