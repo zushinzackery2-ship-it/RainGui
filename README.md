@@ -23,7 +23,7 @@
 > [!IMPORTANT]
 > **Hook 转发层说明**  
 > `raingui_impl_autohook.h`、`raingui_impl_dx11hook.h`、`raingui_impl_dx12hook.h`、`raingui_impl_vulkanhook.h` 以及对应的 `*_types.h` 现在只是桥接头。  
-> `RainGui_*Hook_*` 导出仍然保留，但实现只是转发到 `URH` / `VKH`，本仓库内不再重复维护一份 Hook 核心。
+> `RainGui_*Hook_*` 导出仍然保留，但实现已经统一收口到 `URH`；其中 Vulkan 路径再由 `URH` 的 facade 转发到 `VulkanHook`。
 
 ## 特性
 
@@ -36,7 +36,7 @@
 | **DX12 后端** | `raingui_impl_dx12.cpp`：基于 `ID3D12Device` / `ID3D12GraphicsCommandList` 的渲染 backend |
 | **Win32 后端** | `raingui_impl_win32.cpp`：处理窗口消息、鼠标和键盘输入 |
 | **NVIDIA 扩展** | `raingui_impl_nvidia.cpp`：可选 NVIDIA Overlay helper |
-| **Hook 转发层** | `raingui_impl_*hook.h` / `raingui_*hook_types.h`：把 `URH` / `VKH` 的 C++ 接口和类型转发给 `RainGui` 使用者 |
+| **Hook 转发层** | `raingui_impl_*hook.h` / `raingui_*hook_types.h`：把 `URH` 的 C++ 接口和类型转发给 `RainGui` 使用者 |
 | **DLL 导出** | `raingui_exports.cpp`：统一导出 `RainGui_*` C API |
 | **通信层** | `raingui_comm.cpp`：可选共享内存通信辅助 |
 
@@ -268,7 +268,8 @@ VulkanHook        Universal-Render-Hook
 ```
 
 - 纯 GUI 使用路径不需要 `URH` / `VKH`
-- 只有当你包含 `raingui_impl_*hook.h` 或调用 `RainGui_*Hook_*` 导出时，才需要把 `URH` / `VKH` 放进工程
+- `RainGui` 代码层的 Hook 转发现在统一只看 `URH`
+- 但 `URH` 的 Vulkan facade 仍以下层 `VulkanHook` 为实现基础，所以使用 Vulkan 相关转发时仍需要把 `VulkanHook` 一并放进工程
 
 ## 集成
 
