@@ -144,11 +144,11 @@ Win32 Backend   DX11 Backend   DX12 Backend
 | `raingui_impl_autohook.h` | `UrhAutoHook` 命名空间转发 |
 | `raingui_impl_dx11hook.h` | `UrhDx11Hook` 命名空间转发 |
 | `raingui_impl_dx12hook.h` | `UrhDx12Hook` 命名空间转发 |
-| `raingui_impl_vulkanhook.h` | `VkhHook` 命名空间转发 |
+| `raingui_impl_vulkanhook.h` | `UrhVulkanHook` 命名空间转发 |
 | `raingui_dx11hook_types.h` | `UrhDx11HookRuntime / Desc` 类型别名 |
 | `raingui_dx12hook_types.h` | `UrhDx12HookRuntime / Desc` 类型别名 |
 | `raingui_autohook_types.h` | `UrhAutoHookRuntime / Desc` 类型别名 |
-| `raingui_vulkanhook_types.h` | `VkhHookRuntime / Desc` 类型别名 |
+| `raingui_vulkanhook_types.h` | `UrhVulkanHookRuntime / Desc` 类型别名 |
 
 需要注意：
 

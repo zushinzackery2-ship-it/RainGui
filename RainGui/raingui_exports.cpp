@@ -4,7 +4,6 @@
 #include "raingui_impl_dx11hook.h"
 #include "raingui_impl_dx12hook.h"
 #include <urh/urh.h>
-#include <vkh/vkh.h>
 
 RAINGUI_API RainGuiContext* RainGui_CreateContext()
 {
@@ -363,32 +362,32 @@ RAINGUI_API void RainGui_AutoHook_GetDiagnostics(RainGuiAutoHookDiagnostics* dia
 
 RAINGUI_API void RainGui_VulkanHook_FillDefaultDesc(RainGuiVulkanHookDesc* desc)
 {
-    VHK::FillDefaultDesc(desc);
+    URH::FillVulkanDefaultDesc(desc);
 }
 
 RAINGUI_API bool RainGui_VulkanHook_Init(const RainGuiVulkanHookDesc* desc)
 {
-    return VHK::Init(desc);
+    return URH::InitVulkan(desc);
 }
 
 RAINGUI_API void RainGui_VulkanHook_Shutdown()
 {
-    VHK::Shutdown();
+    URH::ShutdownVulkan();
 }
 
 RAINGUI_API bool RainGui_VulkanHook_IsInstalled()
 {
-    return VHK::IsInstalled();
+    return URH::IsVulkanInstalled();
 }
 
 RAINGUI_API bool RainGui_VulkanHook_IsReady()
 {
-    return VHK::IsReady();
+    return URH::IsVulkanReady();
 }
 
 RAINGUI_API const RainGuiVulkanHookRuntime* RainGui_VulkanHook_GetRuntime()
 {
-    return VHK::GetRuntime();
+    return URH::GetVulkanRuntime();
 }
 
 RAINGUI_API bool RainGui_DX12_Init(ID3D12Device* device, int numFramesInFlight, DXGI_FORMAT rtvFormat, ID3D12DescriptorHeap* cbvSrvHeap,

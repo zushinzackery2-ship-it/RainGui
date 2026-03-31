@@ -1,10 +1,10 @@
 #pragma once
 
-#include <vkh/types.h>
+#include <urh/vulkan_types.h>
 
-using RainGuiVulkanHookRuntime = VkhHookRuntime;
-using RainGuiVulkanHookDesc = VkhHookDesc;
-using RainGuiVulkanHookSetupCallback = VkhHookSetupCallback;
-using RainGuiVulkanHookRenderCallback = VkhHookRenderCallback;
-using RainGuiVulkanHookVisibleCallback = VkhHookVisibleCallback;
-using RainGuiVulkanHookShutdownCallback = VkhHookShutdownCallback;
+using RainGuiVulkanHookRuntime = UrhVulkanHookRuntime;
+using RainGuiVulkanHookDesc = UrhVulkanHookDesc;
+using RainGuiVulkanHookSetupCallback = UrhVulkanHookSetupCallback;
+using RainGuiVulkanHookRenderCallback = UrhVulkanHookRenderCallback;
+using RainGuiVulkanHookVisibleCallback = UrhVulkanHookVisibleCallback;
+using RainGuiVulkanHookShutdownCallback = UrhVulkanHookShutdownCallback;

@@ -1,5 +1,5 @@
 #pragma once
 
-#include <vkh/hook.h>
+#include <urh/vulkan_hook.h>
 
-namespace RainGuiVulkanHook = VkhHook;
+namespace RainGuiVulkanHook = UrhVulkanHook;
